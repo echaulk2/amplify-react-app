@@ -1,0 +1,11 @@
+{
+  "auth": {
+    "reactamplifiedapp637125a4": {
+      "service": "Cognito",
+      "serviceType": "imported",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false
+    }
+  }
+}

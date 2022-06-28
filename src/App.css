@@ -4,8 +4,7 @@
   margin: 1.2rem;
 }
 
-.auth-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
+.collection-table {
+  width: 80%;
+  margin-top: 50px;
 }

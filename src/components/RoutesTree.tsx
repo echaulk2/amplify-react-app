@@ -1,9 +1,9 @@
-import { Protected } from './Protected';
+import { Collection } from './Collection';
 import { RequireAuth } from './RequireAuth';
 import { Login } from './Login';
 import { ProtectedSecond } from './ProtectSecond';
 import { Home } from './Home';
-import { Layout } from './Layout';
+import { BasicLayout } from './BasicLayout';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import '../App.css';
 import 'antd/dist/antd.css'; 
@@ -12,13 +12,13 @@ export function RoutesTree() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route path="/" element={<BasicLayout />}>
           <Route index element={<Home />} />
           <Route
-            path="/protected"
+            path="/collection"
             element={
               <RequireAuth>
-                <Protected />
+                <Collection />
               </RequireAuth>
             }
           />

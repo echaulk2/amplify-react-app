@@ -16,8 +16,8 @@ export function Navbar() {
   return (
     <Menu mode="horizontal">
         <Menu.Item onClick={() => navigate('/')} >Home</Menu.Item>
-        <Menu.Item onClick={() => navigate('/protected')}>
-          First Protected Route
+        <Menu.Item onClick={() => navigate('/collection')}>
+          Collection
         </Menu.Item>
         <Menu.Item onClick={() => navigate('/protected2')}>
           Second Protected Route

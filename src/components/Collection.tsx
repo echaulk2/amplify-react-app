@@ -1,19 +1,22 @@
-import { useAuthenticator, Heading } from '@aws-amplify/ui-react';
+import { useAuthenticator, Heading, Icon } from '@aws-amplify/ui-react';
 import { useEffect, useState } from 'react';
 import { API } from 'aws-amplify';
-import { Table } from 'antd';
+import { Card, Col, Row, Table } from 'antd';
 import * as Interfaces from "../shared/interfaces";
+import AddGameToCollection from './AddGameToCollection';
 
 export function Collection() {
   const { route, user } = useAuthenticator((context) => [context.route]);
   const [collection, setCollection] = useState([]);
+  const [tableLoading, setTableLoading] = useState(true);
 
   async function getCollection() {
-    const apiName = 'GameAPI';
-    const path = '/listGames'; 
-    const init = {
+    let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
+    let apiName = 'GameAPI';
+    let path = '/listGames'; 
+    let init = {
         headers: {
-          'Authorization': user.getSignInUserSession()?.getIdToken().getJwtToken()
+          'Authorization': userToken
         },
         response: true
     };
@@ -21,7 +24,10 @@ export function Collection() {
     await API
       .get(apiName, path, init)
       .then(response => {
-        setCollection(response.data);
+        if (response.data) {
+          setCollection(response.data);
+          setTableLoading(false);
+        }
       })
       .catch(error => {
         console.log(error.response);
@@ -63,12 +69,21 @@ export function Collection() {
       key: "console"
     },
   ]
+
   return (
     <>
-      <Heading level={1}>{message}</Heading>
       { collection &&
-        <Table dataSource={collection} columns={columns} size="small" 
-          rowKey={(record: Interfaces.Game) => record.gameID } className="collection-table" />
+        <Row gutter={[16, 16]}>
+          <Col span={12}>
+            <Card>
+              <Heading level={1}>{message}</Heading>
+              <Table dataSource={collection} columns={columns} size="small" 
+                rowKey={(record: Interfaces.Game) => record.gameID } className="collection-table" 
+                loading={tableLoading} pagination={{ pageSize: 5 }}/> 
+            </Card>
+          </Col>
+          <AddGameToCollection getCollection={getCollection} />
+        </Row>            
       }
     </>
   )

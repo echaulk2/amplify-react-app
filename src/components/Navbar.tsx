@@ -14,7 +14,7 @@ export function Navbar() {
   }
 
   return (
-    <Menu mode="horizontal">
+    <Menu mode="horizontal" theme="dark">
         <Menu.Item onClick={() => navigate('/')} >Home</Menu.Item>
         <Menu.Item onClick={() => navigate('/collection')}>
           Collection

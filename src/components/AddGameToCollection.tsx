@@ -57,7 +57,7 @@ function AddGameToCollection(props: Interfaces.IAddGameToCollectionProps) {
     return (
     <>
         <Col span={12}>
-            <Card>
+            <Card style={{ height: "100%" }}>
                 <Heading level={1}>Add game to your collection</Heading>
                 <Form layout="horizontal" onFinish={onFinish} title="Add game to your collection" labelAlign="left"
                     labelCol={{

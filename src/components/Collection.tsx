@@ -8,14 +8,18 @@ import * as Enums from "../shared/Enums";
 import * as Maps from "../shared/Maps";
 import { Game } from '../models/Game';
 import {v4 as uuidv4} from 'uuid';
+import { DefaultRecordType } from 'rc-table/lib/interface';
 
 export function Collection() {
-  const { route, user } = useAuthenticator((context) => [context.route]);
+  const { route, user } = useAuthenticator((context) => [
+    context.route, 
+    context.user
+  ]);
   const [collection, setCollection] = useState<Game[]>([]);
-  const [isEditing, setIsModifying] = useState(false);
-  const [editingGame, setModifyingGame] = useState<Game>({});
-  const [isAdding, setIsCreating] = useState(false);
-  const [addingGame, setCreatingGame] = useState<Game>({});  
+  const [isModifying, setIsModifying] = useState(false);
+  const [modifyingGame, setModifyingGame] = useState<Game>({});
+  const [isCreating, setIsCreating] = useState(false);
+  const [creatingGame, setCreatingGame] = useState<Game>({});  
   const [tableLoading, setTableLoading] = useState(true);
   
   let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
@@ -62,11 +66,11 @@ export function Collection() {
           'Authorization': user.getSignInUserSession()?.getIdToken().getJwtToken()
         },
         body: {
-            gameName: addingGame.gameName,
-            developer: addingGame.developer,
-            yearReleased: Number(addingGame.yearReleased),
-            genre: addingGame.genre,
-            console: addingGame.console
+            gameName: creatingGame.gameName,
+            developer: creatingGame.developer,
+            yearReleased: Number(creatingGame.yearReleased),
+            genre: creatingGame.genre,
+            console: creatingGame.console
         },
         response: true
     };
@@ -78,11 +82,11 @@ export function Collection() {
               previousState.push(response.data);
               return previousState;
             });
-            message.success(`${addingGame.gameName} has been added to your collection.`);
+            message.success(`${creatingGame.gameName} has been added to your collection.`);
         }
       })
       .catch(error => {
-        message.error(`Unable to add ${editingGame.gameName} to your collection.`);
+        message.error(`Unable to add ${modifyingGame.gameName} to your collection.`);
         console.log(error.response);
     }); 
     setTableLoading(false);
@@ -103,12 +107,12 @@ export function Collection() {
     let apiName = 'GameAPI';
     let path = '/modifyGame'; 
     let body = {
-      gameName: editingGame.gameName,
-      gameID: editingGame.gameID,
-      developer: editingGame.developer,
-      yearReleased: Number(editingGame.yearReleased),
-      genre: editingGame.genre,
-      console: editingGame.console    
+      gameName: modifyingGame.gameName,
+      gameID: modifyingGame.gameID,
+      developer: modifyingGame.developer,
+      yearReleased: Number(modifyingGame.yearReleased),
+      genre: modifyingGame.genre,
+      console: modifyingGame.console    
     };
     let init = {
         headers: {
@@ -124,18 +128,18 @@ export function Collection() {
         if (response.data) {
           setCollection((previousState: Game[]) => {
             return previousState.map((game: Game) => {
-              if (game.gameID === editingGame.gameID) {
-                return editingGame;
+              if (game.gameID === modifyingGame.gameID) {
+                return modifyingGame;
               } else {
                 return game;
               }
             })
           }); 
-          message.success(`${editingGame.gameName} has been modified.`);
+          message.success(`${modifyingGame.gameName} has been modified.`);
         }
       })
       .catch(error => {
-        message.error(`Unable to modify ${editingGame.gameName}.`);
+        message.error(`Unable to modify ${modifyingGame.gameName}.`);
         console.log(error.response);
     });     
     setTableLoading(false);
@@ -188,12 +192,13 @@ export function Collection() {
     {
       title: "Game Name",
       dataIndex: "gameName",
-      key: "gameName"
+      key: "gameName",
+      sorter: (a: DefaultRecordType, b: DefaultRecordType) => a.gameName.localeCompare(b.gameName)
     },
     {
       title: "Developer",
       dataIndex: "developer",
-      key: "developer"
+      key: "developer",
     },
     {
       title: "Year Released",
@@ -224,12 +229,12 @@ export function Collection() {
 
   let modifyInputFields = () => {
     let inputFields = [] as any;
-    if (editingGame) {
+    if (modifyingGame) {
       for (let property in Enums.Game) {        
         if (!Object.keys(Enums.ExcludedModifyKeys).includes(property) && isNaN(Number(property))) {
           inputFields.push(
-            <Form.Item label={Maps.gameMap.get(property)} key={`${editingGame.gameID}-${property}`}>
-              <Input value={editingGame[property as keyof Game]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            <Form.Item label={Maps.gameMap.get(property)} key={`${modifyingGame.gameID}-${property}`}>
+              <Input value={modifyingGame[property as keyof Game]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   let targetValue = e.target.value;
                   setModifyingGame((previousValues: Game) => {
                     return {...previousValues, [property]: targetValue };
@@ -247,7 +252,7 @@ export function Collection() {
 
   let addGameInputFields = () => {
     let inputFields = [] as any;
-    for (let [key, value] of Object.entries(addingGame)) {
+    for (let [key, value] of Object.entries(creatingGame)) {
       if (!Object.keys(Enums.ExcludedModifyKeys).includes(key)) {
         inputFields.push(
           <Form.Item label={Maps.gameMap.get(key)} key={`${key}`}>
@@ -279,13 +284,13 @@ export function Collection() {
             <Table dataSource={collection} columns={columns} size="small" 
               rowKey={(record: Game) => record.gameID || uuidv4() } className="collection-table" 
               loading={tableLoading} pagination={{ pageSize: 5 }}/> 
-              <Modal title="Modify Game" visible={isEditing} okText="Save" 
+              <Modal title="Modify Game" visible={isModifying} okText="Save" 
                 onCancel={() => resetModifyingGame() } 
                 onOk={() => { handleModifyGame(); resetModifyingGame() } }>
                 { modifyInputFields() }
               </Modal>
               <Button onClick={() => initializeCreateGame()} type="primary">Add Game</Button>
-              <Modal title="Add game to your collection" visible={isAdding} okText="Save"
+              <Modal title="Add game to your collection" visible={isCreating} okText="Save"
                 onCancel={() => resetCreateGame() }
                 onOk={() => { handleCreateGame(); resetCreateGame() } }>
                 { addGameInputFields() }

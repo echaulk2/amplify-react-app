@@ -1,15 +1,11 @@
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { useAuthenticator, Heading, View } from '@aws-amplify/ui-react';
+import { Outlet } from 'react-router-dom';
+import { Heading } from '@aws-amplify/ui-react';
 import { Navbar } from './Navbar';
-import { Layout, Typography, Alert } from 'antd';
+import { Layout } from 'antd';
 
 export function BasicLayout() {
   const { Header, Content, Footer } = Layout;
-  const { Text } = Typography;
-  const { route } = useAuthenticator((context) => [
-    context.route
-  ]);
   
   return (
     <Layout>

@@ -2,22 +2,25 @@ import { useAuthenticator, Heading } from '@aws-amplify/ui-react';
 import { useEffect, useState } from 'react';
 import { API } from 'aws-amplify';
 import { message, Card, Col, Row, Table, Modal, Input, Form, Button } from 'antd';
-import * as Interfaces from "../shared/interfaces";
-import {EditOutlined, DeleteOutlined} from '@ant-design/icons';
-import * as Enums from "../shared/enums";
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import * as Interfaces from "../shared/Interfaces";
+import * as Enums from "../shared/Enums";
+import * as Maps from "../shared/Maps";
 import { Game } from '../models/Game';
+import {v4 as uuidv4} from 'uuid';
 
 export function Collection() {
   const { route, user } = useAuthenticator((context) => [context.route]);
-  const [collection, setCollection] = useState<Interfaces.Game[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingGame, setEditingGame] = useState<Interfaces.Game>(null as any);
-  const [isAdding, setIsAdding] = useState(false);
-  const [addingGame, setAddingGame] = useState<Game>({});  
+  const [collection, setCollection] = useState<Game[]>([]);
+  const [isEditing, setIsModifying] = useState(false);
+  const [editingGame, setModifyingGame] = useState<Game>({});
+  const [isAdding, setIsCreating] = useState(false);
+  const [addingGame, setCreatingGame] = useState<Game>({});  
   const [tableLoading, setTableLoading] = useState(true);
   
-  const getCollection = async() => {
-    let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
+  let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
+
+  const handleGetCollection = async() => {
     let apiName = 'GameAPI';
     let path = '/listGames'; 
     let init = {
@@ -32,79 +35,26 @@ export function Collection() {
       .then(response => {
         if (response.data) {
           setCollection(response.data);
-          setTableLoading(false);
         }
       })
       .catch(error => {
         console.log(error.response);
     });
+    setTableLoading(false);
   }
 
-  const initModifyGame = (game: Interfaces.Game) => { 
-    setIsEditing(true);
-    setEditingGame(game);
+  const initializeCreateGame = () => { 
+    setIsCreating(true);
+    setCreatingGame(new Game());
   }
   
-  const resetEditingGame = () => {
-    setIsEditing(false);
-    setEditingGame(null as any);
+  const resetCreateGame = () => {
+    setIsCreating(false);
+    setCreatingGame({});
   }
 
-  const onModifyGame = async () => {
-    let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
-    let apiName = 'GameAPI';
-    let path = '/modifyGame'; 
-    let body = {
-      gameName: editingGame.gameName,
-      gameID: editingGame.gameID,
-      ...(editingGame.developer) && {developer: editingGame.developer},
-      ...(editingGame.yearReleased) && {yearReleased: editingGame.yearReleased},
-      ...(editingGame.genre) && {genre: editingGame.genre},
-      ...(editingGame.console) && {console: editingGame.console}      
-    };
-    let init = {
-        headers: {
-          'Authorization': userToken
-        },
-        body: body,
-        response: true
-    };
-    
-    await API
-      .put(apiName, path, init)
-      .then(response => {
-        console.log(response);
-        if (response.data) {
-          setCollection((previousState: Interfaces.Game[]) => {
-            return previousState.map((game: Interfaces.Game) => {
-              if (game.gameID === editingGame.gameID) {
-                return editingGame;
-              } else {
-                return game;
-              }
-            })
-          }); 
-          //Not sure if I should be calling the API to get the updated list of games or just do this locally
-          message.success(`${editingGame.gameName} has been modified.`);
-        }
-      })
-      .catch(error => {
-        message.error(`Unable to modify ${editingGame.gameName}.`);
-        console.log(error.response);
-    });
-  }
-
-  const initAddingGame = () => { 
-    setIsAdding(true);
-    setAddingGame(new Game("", ""));
-  }
-  
-  const resetAddingGame = () => {
-    setIsAdding(false);
-    setAddingGame(new Game("", ""));
-  }
-
-  const onCreateGame = async () => {
+  const handleCreateGame = async () => {     
+    setTableLoading(true);
     const apiName = 'GameAPI';
     const path = '/createGame'; 
     const init = {
@@ -120,12 +70,11 @@ export function Collection() {
         },
         response: true
     };
-    
     await API
       .post(apiName, path, init)
-      .then(response => {
-        if (response.data) {
-            setCollection((previousState: Interfaces.Game[]) => {
+      .then((response: Interfaces.IHttpResponse) => {
+        if (response.status === 200 && response.data) {
+            setCollection((previousState: Game[]) => {
               previousState.push(response.data);
               return previousState;
             });
@@ -135,16 +84,31 @@ export function Collection() {
       .catch(error => {
         message.error(`Unable to add ${editingGame.gameName} to your collection.`);
         console.log(error.response);
-    });
+    }); 
+    setTableLoading(false);
   }
 
-  const onDeleteGame = async (game: Interfaces.Game) => {    
-    let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
+  const initializeModifyGame = (game: Game) => { 
+    setIsModifying(true);
+    setModifyingGame({...game});
+  }
+  
+  const resetModifyingGame = () => {
+    setIsModifying(false);
+    setModifyingGame({});
+  }
+
+  const handleModifyGame = async () => {
+    setTableLoading(true);
     let apiName = 'GameAPI';
-    let path = '/deleteGame'; 
+    let path = '/modifyGame'; 
     let body = {
-      gameName: game.gameName,
-      gameID: game.gameID   
+      gameName: editingGame.gameName,
+      gameID: editingGame.gameID,
+      developer: editingGame.developer,
+      yearReleased: Number(editingGame.yearReleased),
+      genre: editingGame.genre,
+      console: editingGame.console    
     };
     let init = {
         headers: {
@@ -153,23 +117,71 @@ export function Collection() {
         body: body,
         response: true
     };
-    
+
     await API
-      .del(apiName, path, init)
-      .then(response => {
+      .put(apiName, path, init)
+      .then((response: Interfaces.IHttpResponse)  => {
         if (response.data) {
-          setCollection(collection.filter((record: Interfaces.Game) => game.gameID !== record.gameID)); 
-          //Not sure if I should be calling the API to get the updated list of games or just do this locally
-          message.success(`${game.gameName} has been deleted from your collection.`);
+          setCollection((previousState: Game[]) => {
+            return previousState.map((game: Game) => {
+              if (game.gameID === editingGame.gameID) {
+                return editingGame;
+              } else {
+                return game;
+              }
+            })
+          }); 
+          message.success(`${editingGame.gameName} has been modified.`);
         }
       })
       .catch(error => {
-        message.error(`Unable to delete ${game.gameName} from your collection.`);
+        message.error(`Unable to modify ${editingGame.gameName}.`);
         console.log(error.response);
-    });
+    });     
+    setTableLoading(false);
+  }
+
+  const handleDeleteGame = async (game: Game) => {
+    Modal.confirm({
+      title: "Are you sure you want to delete this game from your collection?",
+      okText: "Yes",
+      okType: "danger",
+      onOk: async () => {
+        let apiName = 'GameAPI';
+        let path = '/deleteGame'; 
+        let body = {
+          gameName: game.gameName,
+          gameID: game.gameID   
+        };
+        let init = {
+            headers: {
+              'Authorization': userToken
+            },
+            body: body,
+            response: true
+        };
+        
+        setTableLoading(true);
+        await API
+          .del(apiName, path, init)
+          .then(response => {
+            if (response.data) {
+              setCollection((previousState: Game[]) => { 
+                return previousState.filter((record: Game) => game.gameID !== record.gameID) 
+              });
+              message.success(`${game.gameName} has been deleted from your collection.`);
+            }
+          })
+          .catch(error => {
+            message.error(`Unable to delete ${game.gameName} from your collection.`);
+            console.log(error.response);
+        });     
+        setTableLoading(false);
+      }
+    });    
   }
   const displayMessage =
-  route === 'authenticated' ? `${user.getUsername()}'s Game Collection` : 'Loading...';
+    route === 'authenticated' ? `${user.getUsername()}'s Game Collection` : 'Loading...';
 
   const columns = 
   [
@@ -201,10 +213,10 @@ export function Collection() {
     {
       title: "Actions",
       key: "action",
-      render: (game: Interfaces.Game) => {
+      render: (game: Game) => {
         return <>
-          <EditOutlined onClick={() => initModifyGame(game)} title="Edit" />
-          <DeleteOutlined onClick={() => onDeleteGame(game)} style={{color: "red", marginLeft: 12}} title="Delete" />
+          <EditOutlined onClick={() => initializeModifyGame(game)} title="Edit" />
+          <DeleteOutlined onClick={() => handleDeleteGame(game)} style={{color: "red", marginLeft: 12}} title="Delete" />
         </>
       }
     }
@@ -213,24 +225,22 @@ export function Collection() {
   let modifyInputFields = () => {
     let inputFields = [] as any;
     if (editingGame) {
-      for (let [key, value] of Object.entries(editingGame)) {
-        if (!Object.keys(Enums.ExcludedModifyKeys).includes(key)) {
+      for (let property in Enums.Game) {        
+        if (!Object.keys(Enums.ExcludedModifyKeys).includes(property) && isNaN(Number(property))) {
           inputFields.push(
-            <div>
-              <Form.Item label={key}>
-                <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    let targetValue = e.target.value;
-                    setEditingGame((previousValues: Interfaces.Game) => {
-                      return {...previousValues, [key]: targetValue };
-                    });
-                  }} 
-                />
-              </Form.Item>
-            </div>
+            <Form.Item label={Maps.gameMap.get(property)} key={`${editingGame.gameID}-${property}`}>
+              <Input value={editingGame[property as keyof Game]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  let targetValue = e.target.value;
+                  setModifyingGame((previousValues: Game) => {
+                    return {...previousValues, [property]: targetValue };
+                  });
+                }}                   
+              />
+            </Form.Item>
           );  
         } 
       }
-    }
+    } 
     let modifyGameForm = <Form labelAlign="left" labelCol={{ span: 5, }} wrapperCol={{ span: 12, }}>{inputFields}</Form>
     return modifyGameForm;
   }
@@ -240,17 +250,15 @@ export function Collection() {
     for (let [key, value] of Object.entries(addingGame)) {
       if (!Object.keys(Enums.ExcludedModifyKeys).includes(key)) {
         inputFields.push(
-          <div>
-            <Form.Item label={key}>
-              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  let targetValue = e.target.value;
-                  setAddingGame((previousValues: Game) => {
-                    return {...previousValues, [key]: targetValue };
-                  });
-                }} 
-              />
-            </Form.Item>
-          </div>
+          <Form.Item label={Maps.gameMap.get(key)} key={`${key}`}>
+            <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                let targetValue = e.target.value;
+                setCreatingGame((previousValues: Game) => {
+                  return {...previousValues, [key]: targetValue };
+                });
+              }}
+            />
+          </Form.Item>
         );  
       } 
     }
@@ -259,38 +267,32 @@ export function Collection() {
   }
 
   useEffect(() => {
-    getCollection();
-  }, [collection]) 
+    handleGetCollection();
+  }) 
 
   return (
     <>
-      { collection &&
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <Card style={{ height: "100%" }}>
-              <Heading level={1}>{displayMessage}</Heading>
-              <Table dataSource={collection} columns={columns} size="small" 
-                rowKey={(record: Interfaces.Game) => record.gameID } className="collection-table" 
-                loading={tableLoading} pagination={{ pageSize: 5 }}/> 
-                <Modal title="Modify Game" visible={isEditing} okText="Save" 
-                  onCancel={() => resetEditingGame() } 
-                  onOk={() => {
-                    onModifyGame();
-                    resetEditingGame() } }>
-                  { modifyInputFields() }
-                </Modal>
-                <Button onClick={() => initAddingGame()} type="primary">Add Game</Button>
-                <Modal title="Add Game" visible={isAdding} okText="Save"
-                  onCancel={() => resetAddingGame() }
-                  onOk={() => {
-                    onCreateGame();
-                    resetAddingGame() } }>
+      <Row gutter={[16, 16]}>
+        <Col span={12}>
+          <Card style={{ height: "100%" }}>
+            <Heading level={1}>{displayMessage}</Heading>
+            <Table dataSource={collection} columns={columns} size="small" 
+              rowKey={(record: Game) => record.gameID || uuidv4() } className="collection-table" 
+              loading={tableLoading} pagination={{ pageSize: 5 }}/> 
+              <Modal title="Modify Game" visible={isEditing} okText="Save" 
+                onCancel={() => resetModifyingGame() } 
+                onOk={() => { handleModifyGame(); resetModifyingGame() } }>
+                { modifyInputFields() }
+              </Modal>
+              <Button onClick={() => initializeCreateGame()} type="primary">Add Game</Button>
+              <Modal title="Add game to your collection" visible={isAdding} okText="Save"
+                onCancel={() => resetCreateGame() }
+                onOk={() => { handleCreateGame(); resetCreateGame() } }>
                 { addGameInputFields() }
-                </Modal>
-            </Card>
-          </Col>
-        </Row>            
-      }
+              </Modal>
+          </Card>
+        </Col>
+      </Row>      
     </>
   )
 }

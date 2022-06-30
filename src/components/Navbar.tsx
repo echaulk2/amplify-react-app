@@ -1,6 +1,7 @@
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import { Button, Menu } from "antd";
 import { useNavigate } from "react-router-dom";
+import {v4 as uuidv4} from 'uuid';
 
 export function Navbar() {
   const { route, signOut } = useAuthenticator((context) => [
@@ -15,17 +16,17 @@ export function Navbar() {
 
   return (
     <Menu mode="horizontal" theme="dark">
-        <Menu.Item onClick={() => navigate('/')} >Home</Menu.Item>
-        <Menu.Item onClick={() => navigate('/collection')}>
+        <Menu.Item onClick={() => navigate('/')} key={uuidv4()}>Home</Menu.Item>
+        <Menu.Item onClick={() => navigate('/collection')} key={uuidv4()}>
           Collection
         </Menu.Item>
-        <Menu.Item onClick={() => navigate('/protected2')}>
+        <Menu.Item onClick={() => navigate('/protected2')} key={uuidv4()}>
           Second Protected Route
         </Menu.Item>
         {route !== 'authenticated' ? (
-          <Menu.Item onClick={() => navigate('/login')}>Login</Menu.Item>
+          <Menu.Item onClick={() => navigate('/login')} key={uuidv4()}>Login</Menu.Item>
         ) : (
-          <Menu.Item onClick={() => logOut()}>Logout</Menu.Item>
+          <Menu.Item onClick={() => logOut()} key={uuidv4()}>Logout</Menu.Item>
         )}
     </Menu>
   );

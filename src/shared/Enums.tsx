@@ -11,3 +11,11 @@ export enum ExcludedModifyKeys {
     userID,
     collectionID
 }
+
+export enum Game {
+    gameName = "Game Name",
+    yearReleased = "Year Released",
+    genre = "Genre",
+    console = "Console",
+    developer = "Developer",
+}

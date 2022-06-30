@@ -2,8 +2,7 @@ import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuthenticator, Heading, View } from '@aws-amplify/ui-react';
 import { Navbar } from './Navbar';
-import { Layout, Typography } from 'antd';
-import Sider from 'antd/lib/layout/Sider';
+import { Layout, Typography, Alert } from 'antd';
 
 export function BasicLayout() {
   const { Header, Content, Footer } = Layout;
@@ -17,11 +16,8 @@ export function BasicLayout() {
       <Header>
         <Navbar />
       </Header>
-      <Content style={{ padding: '20px 50px' }}>
-          <Heading level={1}>Game API Demo</Heading>
-          <View>
-            {route !== 'authenticated' && <Text type="warning">Please Login!</Text>}
-          </View>
+      <Content style={{ padding: '20px 50px', height: "100vh"  }}>
+          <Heading level={1}>Game API</Heading>
           <Outlet />
       </Content>
       <Footer>Generic Footer @2022 Great Job!</Footer>

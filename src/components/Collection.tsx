@@ -9,6 +9,8 @@ import * as Maps from "../shared/Maps";
 import { Game } from '../models/Game';
 import {v4 as uuidv4} from 'uuid';
 import { DefaultRecordType } from 'rc-table/lib/interface';
+import Wishlist from './Wishlist';
+import { GamePriceMonitor } from '../models/GamePriceMonitor';
 
 export function Collection() {
   const { route, user } = useAuthenticator((context) => [
@@ -23,7 +25,6 @@ export function Collection() {
   const [tableLoading, setTableLoading] = useState(true);
   
   let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
-
   const handleGetCollection = async() => {
     let apiName = 'GameAPI';
     let path = '/listGames'; 
@@ -77,9 +78,9 @@ export function Collection() {
     await API
       .post(apiName, path, init)
       .then((response: Interfaces.IHttpResponse) => {
-        if (response.status === 200 && response.data) {
+        if (response.status === 200 && response.data as Game[]) {
             setCollection((previousState: Game[]) => {
-              previousState.push(response.data);
+              previousState.push(response.data as Game);
               return previousState;
             });
             message.success(`${creatingGame.gameName} has been added to your collection.`);
@@ -105,7 +106,7 @@ export function Collection() {
   const handleModifyGame = async () => {
     setTableLoading(true);
     let apiName = 'GameAPI';
-    let path = '/modifyGame'; 
+    let path = (modifyingGame.collectionID) ? '/colleciton/wishlist/modifyGame' : '/modifyGame'; 
     let body = {
       gameName: modifyingGame.gameName,
       gameID: modifyingGame.gameID,
@@ -152,7 +153,7 @@ export function Collection() {
       okType: "danger",
       onOk: async () => {
         let apiName = 'GameAPI';
-        let path = '/deleteGame'; 
+        let path = (modifyingGame.collectionID) ? '/collection/wishlist/removeGame' : '/deleteGame'; 
         let body = {
           gameName: game.gameName,
           gameID: game.gameID   
@@ -234,7 +235,7 @@ export function Collection() {
         if (!Object.keys(Enums.ExcludedModifyKeys).includes(property) && isNaN(Number(property))) {
           inputFields.push(
             <Form.Item label={Maps.gameMap.get(property)} key={`${modifyingGame.gameID}-${property}`}>
-              <Input value={modifyingGame[property as keyof Game]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              <Input value={modifyingGame[property as keyof Interfaces.IModifyGameInputFields]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   let targetValue = e.target.value;
                   setModifyingGame((previousValues: Game) => {
                     return {...previousValues, [property]: targetValue };
@@ -273,7 +274,7 @@ export function Collection() {
 
   useEffect(() => {
     handleGetCollection();
-  }) 
+  }, []) 
 
   return (
     <>
@@ -297,7 +298,15 @@ export function Collection() {
               </Modal>
           </Card>
         </Col>
-      </Row>      
+      </Row>  
+      <Row>    
+        <Col>
+          <Card style={{ height: "100%" }}>
+              <Heading level={1}>Wishlist</Heading>
+              <Wishlist />
+          </Card>
+        </Col>
+      </Row>    
     </>
   )
 }

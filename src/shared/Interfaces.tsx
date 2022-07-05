@@ -6,9 +6,20 @@ export interface Collection {
 
 export interface IHttpResponse {
     config: object;
-    data: Game;
+    data: Game | Game[] | Collection | Collection[];
     headers: object;
     request: XMLHttpRequest;
     status: number;
     statusTest: string;
+}
+
+export interface IModifyGameInputFields {
+    gameID: string;
+    userID: string;
+    gameName: string;
+    yearReleased: number;
+    genre: string;
+    console: string;
+    developer: string;    
+    collectionID: string;
 }

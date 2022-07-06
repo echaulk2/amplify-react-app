@@ -6,10 +6,15 @@ export enum GameMap {
     console = "Console"
 }
 
-export enum ExcludedModifyKeys {
-    gameID,
-    userID,
-    collectionID
+export enum GamePriceDataMap {
+    desiredPrce = "Desired Price",
+    desiredPriceExists = "Desired Price Exists",
+    lastChecked = "Last Checked",
+    lowestPrice = "Lowest Price",
+    averagePrice = "Average Price",
+    listedItemTitle = "Title",
+    listedItemURL = "Link",
+    listedItemConsole = "Console"
 }
 
 export enum Game {
@@ -18,4 +23,16 @@ export enum Game {
     genre = "Genre",
     console = "Console",
     developer = "Developer",
+}
+
+export enum ExcludedModifyKeys {
+    gameID,
+    userID,
+    collectionID,
+    priceMonitorData
+}
+
+export enum ExcludeGamePriceData {
+    gamePriceDataID,
+    priceMonitorID
 }

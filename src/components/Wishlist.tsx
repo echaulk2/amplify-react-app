@@ -1,47 +1,30 @@
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { Table } from 'antd';
+import { Heading, useAuthenticator } from '@aws-amplify/ui-react';
+import { Button, message, Modal, Table } from 'antd';
+import { Header } from 'antd/lib/layout/layout';
 import { API } from 'aws-amplify';
 import { useEffect, useState } from 'react'
 import { Collection } from '../models/Collection';
 import { Game } from '../models/Game';
 import { GamePriceMonitor } from '../models/GamePriceMonitor';
 import * as Interfaces from "../shared/Interfaces";
+import CreateGame from './CreateGame';
+import GamePriceMonitorView from './GamePriceMonitor';
 
-function Wishlist() {
+interface WishlistProps {
+    collectionID: string;
+}
+function Wishlist(props: WishlistProps) {
     const { route, user } = useAuthenticator((context) => [
       context.route, 
       context.user
     ]);
     const [tableLoading, setTableLoading] = useState(true);
+    const [isVisible, setIsVisible] = useState(false);
     const [wishlistGames, setWishlistGames] = useState<Game[]>([]);
+    const [isCreating, setIsCreating] = useState(false);
+    const [creatingGame, setCreatingGame] = useState<Game>({});  
 
     let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
-    let userID = user.getUsername();
-
-    const handleGetWishlistsByUserID = async() => {
-        let apiName = 'GameAPI';
-        let path = '/collection/wishlist/getWishlists'; 
-        let init = {
-            headers: {
-                'Authorization': userToken
-            },
-            response: true,
-            queryStringParameters: {  
-                userID: userID
-            }        
-        };
-
-        await API
-        .get(apiName, path, init)
-        .then((response: Interfaces.IHttpResponse) => {
-            if (response.data) {
-                let wishlists = response.data as Collection[];
-                wishlists.forEach((wishlist: Collection) => {
-                    handleGetWishlistByID(wishlist.collectionID);
-                })
-            }
-        })
-    }
 
     const handleGetWishlistByID = async(collectionID: string) => {
         let apiName = 'GameAPI';
@@ -61,11 +44,61 @@ function Wishlist() {
         .then((response: Interfaces.IHttpResponse) => {
             if (response.data as Game[]) {
                 let games = response.data as Game[];
+                console.log(games);
                 setWishlistGames(games);
             }
         })
         setTableLoading(false);        
     }
+      
+
+    const initializeCreateGame = () => { 
+        setIsCreating(true);
+        setCreatingGame(new Game());
+    }
+      
+    const resetCreateGame = () => {
+        setIsCreating(false);
+        setCreatingGame({});
+    }
+      
+      const handleCreateGame = async () => {     
+          setTableLoading(true);
+          const apiName = 'GameAPI';
+          const path = '/collection/wishlist/addGame'; 
+          const init = {
+              headers: {
+                'Authorization': user.getSignInUserSession()?.getIdToken().getJwtToken()
+              },
+              body: {
+                  gameName: creatingGame.gameName,
+                  collectionID: props.collectionID,
+                  developer: creatingGame.developer,
+                  yearReleased: Number(creatingGame.yearReleased),
+                  genre: creatingGame.genre,
+                  console: creatingGame.console
+              },
+              response: true
+          };
+          console.log(init);
+          await API
+            .post(apiName, path, init)
+            .then((response: Interfaces.IHttpResponse) => {
+              if (response.status === 200 && response.data as Game[]) {
+                  setWishlistGames((previousState: Game[]) => {
+                    previousState.push(response.data as Game);
+                    return previousState;
+                  });
+                  message.success(`${creatingGame.gameName} has been added to your collection.`);
+              }
+            })
+            .catch(error => {
+              message.error(`Unable to add ${creatingGame.gameName} to your collection.`);
+              console.log(error.response);
+          }); 
+          setTableLoading(false);
+      }
+
     const gameColumns = 
     [
         {
@@ -92,69 +125,36 @@ function Wishlist() {
             title: "Console",
             dataIndex: "console",
             key: "console"
+        },
+        {
+            title: "Price Monitors",
+            dataIndex: "priceMonitorData",
+            key: "priceMonitorData",
+            render: (record: GamePriceMonitor[]) => 
+            { 
+                let monitors = [] as any;
+                record.forEach((item: GamePriceMonitor) => {
+                    monitors.push(<GamePriceMonitorView priceMonitorData={item} />);
+                });
+                return monitors && <ul>{monitors}</ul>
+            }
         }
     ]
 
-    const gamePriceDataColumns = 
-    [
-        {
-            title: "Desired Price",
-            key: "desiredPrice",
-            render: (payload: GamePriceMonitor) => { return <p>{payload.gamePriceData?.desiredPrice}</p> }
-        },
-        {
-            title: "Lowest Price",
-            key: "lowestPrice",
-            render: (payload: GamePriceMonitor) => { return <p>{payload.gamePriceData?.lowestPrice}</p> }
-        },
-        {
-            title: "Average Price",
-            key: "averagePrice",
-            render: (payload: GamePriceMonitor) => { return <p>{payload.gamePriceData?.averagePrice}</p> }
-        },
-        {
-            title: "Last Checked",
-            key: "lastChecked",
-            render: (payload: GamePriceMonitor) => { return <p>{payload.gamePriceData?.lastChecked}</p> }
-        },
-        {
-            title: "Listed Item Console",
-            key: "listedItemConsole",
-            render: (payload: GamePriceMonitor) => { return <p>{payload.gamePriceData?.listedItemConsole}</p> }
-        },
-        {
-            title: "Listed Item Title",
-            key: "listed Item Title",
-            render: (payload: GamePriceMonitor) => { return <p>{payload.gamePriceData?.listedItemTitle}</p> }
-        },
-        {
-            title: "Listed Item URL",
-            key: "listedItemURL",
-            render: (payload: GamePriceMonitor) => { return <a href={payload.gamePriceData?.listedItemURL}>Buy here!</a> }
-        },
-        {
-            title: "Desired Condition",
-            key: "desiredCondition",
-            render: (payload: GamePriceMonitor) => { return <p>{payload.gamePriceData?.desiredCondition}</p> }
-        },
-        {
-            title: "Desired Price Exists",
-            key: "desiredPriceExists",
-            render: (payload: GamePriceMonitor) => { return <p>{payload.gamePriceData?.desiredPriceExists }</p> }
-        }
-        
-
-    ]
     useEffect(() => {
-        handleGetWishlistsByUserID();
+        handleGetWishlistByID(props.collectionID);
     }, [])
 
     return (
-        <Table loading={tableLoading} dataSource={wishlistGames} 
-        expandable={{expandedRowRender: (record: Game) => (
-              <Table dataSource={record.priceMonitorData} columns={gamePriceDataColumns} pagination={false}/>
-            )
-          }} columns={gameColumns}/>
+        <>
+            <Button onClick={() => setIsVisible(true)}>View This Wishlist</Button>
+            <Modal visible={isVisible} onCancel={() => setIsVisible(false)} width={1000}>
+                <Heading level={1}>Games in Wishlist</Heading>
+                <Table loading={tableLoading} dataSource={wishlistGames} columns={gameColumns}/>                
+                <CreateGame game={creatingGame} isCreating={isCreating} setCreatingGame={setCreatingGame} initializeCreateGame={initializeCreateGame} 
+                    handleCreateGame={handleCreateGame} resetCreateGame={resetCreateGame} />
+            </Modal>        
+        </>
     )
 }
 

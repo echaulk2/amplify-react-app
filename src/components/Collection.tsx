@@ -1,16 +1,16 @@
-import { useAuthenticator, Heading } from '@aws-amplify/ui-react';
+import { useAuthenticator, Heading, View } from '@aws-amplify/ui-react';
 import { useEffect, useState } from 'react';
 import { API } from 'aws-amplify';
 import { message, Card, Col, Row, Table, Modal, Input, Form, Button } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import * as Interfaces from "../shared/Interfaces";
-import * as Enums from "../shared/Enums";
-import * as Maps from "../shared/Maps";
 import { Game } from '../models/Game';
 import {v4 as uuidv4} from 'uuid';
 import { DefaultRecordType } from 'rc-table/lib/interface';
 import Wishlist from './Wishlist';
-import { GamePriceMonitor } from '../models/GamePriceMonitor';
+import CreateGame from './CreateGame';
+import ModifyGame from './ModifyGame';
+import ViewAllWishlists from './ViewAllWishlists';
 
 export function Collection() {
   const { route, user } = useAuthenticator((context) => [
@@ -25,6 +25,7 @@ export function Collection() {
   const [tableLoading, setTableLoading] = useState(true);
   
   let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
+  
   const handleGetCollection = async() => {
     let apiName = 'GameAPI';
     let path = '/listGames'; 
@@ -87,7 +88,7 @@ export function Collection() {
         }
       })
       .catch(error => {
-        message.error(`Unable to add ${modifyingGame.gameName} to your collection.`);
+        message.error(`Unable to add ${creatingGame.gameName} to your collection.`);
         console.log(error.response);
     }); 
     setTableLoading(false);
@@ -217,6 +218,12 @@ export function Collection() {
       key: "console"
     },
     {
+      title: "Status",
+      dataIndex: "collectionID",
+      key: "collectionID",
+      render: (collectionID: string) => collectionID ? <Wishlist collectionID={collectionID} /> : "Owned"
+    },
+    {
       title: "Actions",
       key: "action",
       render: (game: Game) => {
@@ -227,50 +234,6 @@ export function Collection() {
       }
     }
   ]
-
-  let modifyInputFields = () => {
-    let inputFields = [] as any;
-    if (modifyingGame) {
-      for (let property in Enums.Game) {        
-        if (!Object.keys(Enums.ExcludedModifyKeys).includes(property) && isNaN(Number(property))) {
-          inputFields.push(
-            <Form.Item label={Maps.gameMap.get(property)} key={`${modifyingGame.gameID}-${property}`}>
-              <Input value={modifyingGame[property as keyof Interfaces.IModifyGameInputFields]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  let targetValue = e.target.value;
-                  setModifyingGame((previousValues: Game) => {
-                    return {...previousValues, [property]: targetValue };
-                  });
-                }}                   
-              />
-            </Form.Item>
-          );  
-        } 
-      }
-    } 
-    let modifyGameForm = <Form labelAlign="left" labelCol={{ span: 5, }} wrapperCol={{ span: 12, }}>{inputFields}</Form>
-    return modifyGameForm;
-  }
-
-  let addGameInputFields = () => {
-    let inputFields = [] as any;
-    for (let [key, value] of Object.entries(creatingGame)) {
-      if (!Object.keys(Enums.ExcludedModifyKeys).includes(key)) {
-        inputFields.push(
-          <Form.Item label={Maps.gameMap.get(key)} key={`${key}`}>
-            <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                let targetValue = e.target.value;
-                setCreatingGame((previousValues: Game) => {
-                  return {...previousValues, [key]: targetValue };
-                });
-              }}
-            />
-          </Form.Item>
-        );  
-      } 
-    }
-    let addGameForm = <Form labelAlign="left" labelCol={{ span: 5, }} wrapperCol={{ span: 12, }}>{inputFields}</Form>
-    return addGameForm;
-  }
 
   useEffect(() => {
     handleGetCollection();
@@ -285,28 +248,20 @@ export function Collection() {
             <Table dataSource={collection} columns={columns} size="small" 
               rowKey={(record: Game) => record.gameID || uuidv4() } className="collection-table" 
               loading={tableLoading} pagination={{ pageSize: 5 }}/> 
-              <Modal title="Modify Game" visible={isModifying} okText="Save" 
-                onCancel={() => resetModifyingGame() } 
-                onOk={() => { handleModifyGame(); resetModifyingGame() } }>
-                { modifyInputFields() }
-              </Modal>
-              <Button onClick={() => initializeCreateGame()} type="primary">Add Game</Button>
-              <Modal title="Add game to your collection" visible={isCreating} okText="Save"
-                onCancel={() => resetCreateGame() }
-                onOk={() => { handleCreateGame(); resetCreateGame() } }>
-                { addGameInputFields() }
-              </Modal>
+              <ModifyGame game={modifyingGame} isModifying={isModifying} setModifyingGame={setModifyingGame} 
+                handleModifyGame={handleModifyGame} resetModifyGame={resetModifyingGame} />
+              <CreateGame game={creatingGame} isCreating={isCreating} setCreatingGame={setCreatingGame} initializeCreateGame={initializeCreateGame} 
+                handleCreateGame={handleCreateGame} resetCreateGame={resetCreateGame} />
           </Card>
         </Col>
       </Row>  
-      <Row>    
+      <Row gutter={[16,16]} >
         <Col>
-          <Card style={{ height: "100%" }}>
-              <Heading level={1}>Wishlist</Heading>
-              <Wishlist />
+          <Card style={{ height:"100%" }}>
+            <ViewAllWishlists />
           </Card>
         </Col>
-      </Row>    
+      </Row>
     </>
   )
 }

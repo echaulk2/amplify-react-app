@@ -12,14 +12,13 @@ function Wishlist() {
       context.route, 
       context.user
     ]);
-    const [wishlists, setWishlists] = useState<Collection[]>([]);
     const [tableLoading, setTableLoading] = useState(true);
     const [wishlistGames, setWishlistGames] = useState<Game[]>([]);
 
     let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
     let userID = user.getUsername();
 
-    const handleGetWishlists = async() => {
+    const handleGetWishlistsByUserID = async() => {
         let apiName = 'GameAPI';
         let path = '/collection/wishlist/getWishlists'; 
         let init = {
@@ -35,26 +34,16 @@ function Wishlist() {
         await API
         .get(apiName, path, init)
         .then((response: Interfaces.IHttpResponse) => {
-            if (response.data as Collection[]) {
-                setWishlists({...response.data as Collection[]});
-                console.log('Data is ' + JSON.stringify(wishlists));
+            if (response.data) {
+                let wishlists = response.data as Collection[];
+                wishlists.forEach((wishlist: Collection) => {
+                    handleGetWishlistByID(wishlist.collectionID);
+                })
             }
         })
-        .catch((error: any) => {
-            console.log(error.response);
-        })        
-        .then(() => {    
-            console.log('331');
-            console.log(wishlists);                   
-            wishlists && wishlists.forEach((wishlist: Collection) => {
-                console.log('hello')
-                handleGetWishlist(wishlist.collectionID);
-            });
-        })
-        setTableLoading(false);
     }
 
-    const handleGetWishlist = async(collectionID: string) => {
+    const handleGetWishlistByID = async(collectionID: string) => {
         let apiName = 'GameAPI';
         let path = '/collection/wishlist/'; 
         let init = {
@@ -66,19 +55,17 @@ function Wishlist() {
                 collectionID: collectionID
             }        
         };
-
+        
         await API
         .get(apiName, path, init)
         .then((response: Interfaces.IHttpResponse) => {
             if (response.data as Game[]) {
                 let games = response.data as Game[];
-                setWishlistGames({...games});
+                setWishlistGames(games);
             }
         })
-        setTableLoading(false);
-        
+        setTableLoading(false);        
     }
-
     const gameColumns = 
     [
         {
@@ -159,7 +146,7 @@ function Wishlist() {
 
     ]
     useEffect(() => {
-        handleGetWishlists();
+        handleGetWishlistsByUserID();
     }, [])
 
     return (

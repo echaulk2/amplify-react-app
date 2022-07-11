@@ -1,7 +1,7 @@
-import { useAuthenticator, Heading, View } from '@aws-amplify/ui-react';
+import { useAuthenticator, Heading, Link } from '@aws-amplify/ui-react';
 import { useEffect, useState } from 'react';
 import { API } from 'aws-amplify';
-import { message, Card, Col, Row, Table, Modal, Input, Form, Button } from 'antd';
+import { message, Card, Col, Row, Table, Modal } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import * as Interfaces from "../shared/Interfaces";
 import { Game } from '../models/Game';
@@ -11,6 +11,7 @@ import Wishlist from './Wishlist';
 import CreateGame from './CreateGame';
 import ModifyGame from './ModifyGame';
 import ViewAllWishlists from './ViewAllWishlists';
+import { NavLink } from 'react-router-dom';
 
 export function Collection() {
   const { route, user } = useAuthenticator((context) => [
@@ -222,6 +223,12 @@ export function Collection() {
       dataIndex: "collectionID",
       key: "collectionID",
       render: (collectionID: string) => collectionID ? <Wishlist collectionID={collectionID} /> : "Owned"
+    },
+    {
+      title: "Details",
+      dataIndex: "gameID",
+      key: "gameID",
+      render: (gameID: string, row: any) => <NavLink to={`/game/${gameID}`}>Details</NavLink>
     },
     {
       title: "Actions",

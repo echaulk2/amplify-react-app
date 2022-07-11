@@ -7,6 +7,7 @@ import { BasicLayout } from './BasicLayout';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import '../App.css';
 import 'antd/dist/antd.css'; 
+import GameComponent from './GameComponent';
 
 export function RoutesTree() {
   return (
@@ -29,6 +30,13 @@ export function RoutesTree() {
                 <ProtectedSecond />
               </RequireAuth>
             }
+          />
+          <Route 
+            path="/game/:gameID" 
+            element={
+            <RequireAuth>
+              <GameComponent />
+            </RequireAuth>} 
           />
           <Route path="/login" element={<Login />} />
         </Route>

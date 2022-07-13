@@ -6,6 +6,11 @@ export const gameMap = new Map<string, string>([
     ["console", "Console"]    
 ]);
 
+export const priceMonitorMap = new Map<string, string>([
+    ["desiredPrice", "Desired Price"],
+    ["desiredCondition", "Desired Condition"]
+]);
+
 export const gamePriceDataMap = new Map<string, string>([
     ["desiredPrice", "Desired Price"],
     ["desiredPriceExists", "Desired Price Exists"],

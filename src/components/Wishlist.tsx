@@ -3,12 +3,10 @@ import { Button, message, Modal, Table } from 'antd';
 import { Header } from 'antd/lib/layout/layout';
 import { API } from 'aws-amplify';
 import { useEffect, useState } from 'react'
-import { Collection } from '../models/Collection';
 import { Game } from '../models/Game';
 import { GamePriceMonitor } from '../models/GamePriceMonitor';
 import * as Interfaces from "../shared/Interfaces";
 import CreateGame from './CreateGame';
-import GamePriceMonitorView from './GamePriceMonitor';
 
 interface WishlistProps {
     collectionID: string;
@@ -125,19 +123,6 @@ function Wishlist(props: WishlistProps) {
             title: "Console",
             dataIndex: "console",
             key: "console"
-        },
-        {
-            title: "Price Monitors",
-            dataIndex: "priceMonitorData",
-            key: "priceMonitorData",
-            render: (record: GamePriceMonitor[]) => 
-            { 
-                let monitors = [] as any;
-                record.forEach((item: GamePriceMonitor) => {
-                    monitors.push(<GamePriceMonitorView priceMonitorData={item} />);
-                });
-                return monitors && <ul>{monitors}</ul>
-            }
         }
     ]
 

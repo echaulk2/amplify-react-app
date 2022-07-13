@@ -1,22 +1,29 @@
-import { Heading, Table, useAuthenticator } from '@aws-amplify/ui-react';
-import { Card, Col, message, Row } from 'antd';
+import { useAuthenticator } from '@aws-amplify/ui-react';
+import { Card, Col, List, message, Row, Table } from 'antd';
 import { API } from 'aws-amplify';
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from "react-router-dom";
 import { Game } from '../models/Game';
+import { GamePriceMonitor } from '../models/GamePriceMonitor';
+import GamePriceMonitorComponent from './GamePriceMonitorComponent';
 
 function GameComponent() {
     const { route, user } = useAuthenticator((context) => [
       context.route, 
       context.user
     ]);    
-    const [game, setGetGame] = useState<Game>({});
-    const [isLoading, setisLoading] = useState(true);
+    const [game, setGetGame] = useState({} as Game);
+    const [isLoading, setisLoading] = useState(false);
+
+    useEffect(() => {
+      handleGetGame();
+    }, []) 
     
     let params = useParams();
     let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
 
     const handleGetGame = async() => {
+        setisLoading(true);
         let apiName = 'GameAPI';
         let path = '/getGame'; 
         let init = {
@@ -38,36 +45,49 @@ function GameComponent() {
             }
           })
           .catch(error => {
-            message.error(`Unable to load game.`)
-            console.log(error.response);
+            message.error(`Unable to load game.`); 
         });
     }
-    
-    useEffect(() => {
-      handleGetGame();
-    }, []) 
 
     return (
         <>
             <Row gutter={[16, 16]}>
-                <Col span={6}>
-                    <Card title={`${game.gameName} Details`} loading={isLoading}>
-                        <p>Genre: {game.genre}</p>
-                        <p>Developer: {game.developer}</p>
-                        <p>Year Released: {game.yearReleased}</p>
-                        <p>Console: {game.console}</p>
+                <Col span={4}>
+                    <Card title={game.gameName && `${game.gameName} Game Details`} loading={isLoading}>
+                        <List itemLayout="horizontal">
+                            <List.Item>
+                                <List.Item.Meta
+                                    title={"Genre"}
+                                    description={game.genre}
+                                />
+                            </List.Item>                            
+                            <List.Item>
+                                <List.Item.Meta
+                                    title={"Developer"}
+                                    description={game.developer}
+                                />
+                            </List.Item>                            
+                            <List.Item>
+                                <List.Item.Meta
+                                    title={"Year Released"}
+                                    description={game.yearReleased}
+                                />
+                            </List.Item>                            
+                            <List.Item>
+                                <List.Item.Meta
+                                    title={"Console"}
+                                    description={game.console}
+                                />
+                            </List.Item>
+                        </List>
+                    </Card>
+                </Col>
+                <Col>
+                    <Card title={game.gameName && `${game.gameName} Price Monitors`} loading={isLoading}>
+                        <GamePriceMonitorComponent priceMonitorData={game.priceMonitorData} game={game} />
                     </Card>
                 </Col>
             </Row>
-            { game.priceMonitorData && 
-            <Row gutter={[16, 16]}>
-                <Col span={6}>
-                    <Card title={`${game.gameName} Price Monitors`}>
-                        <Table />
-                    </Card>
-                </Col>
-            </Row>
-            }
         </>
     )
 }

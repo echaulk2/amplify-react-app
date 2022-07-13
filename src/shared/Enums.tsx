@@ -32,6 +32,14 @@ export enum ExcludedModifyKeys {
     priceMonitorData
 }
 
+export enum ExcludedGamePriceMonitorKeys {
+    priceMonitorID,
+    userID,
+    gameID,
+    collectionID,
+    gamePriceData
+}
+
 export enum ExcludeGamePriceData {
     gamePriceDataID,
     priceMonitorID

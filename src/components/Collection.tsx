@@ -10,7 +10,6 @@ import { DefaultRecordType } from 'rc-table/lib/interface';
 import Wishlist from './Wishlist';
 import CreateGame from './CreateGame';
 import ModifyGame from './ModifyGame';
-import ViewAllWishlists from './ViewAllWishlists';
 import { NavLink } from 'react-router-dom';
 
 export function Collection() {
@@ -188,7 +187,7 @@ export function Collection() {
     });    
   }
   const displayMessage =
-    route === 'authenticated' ? `${user.getUsername()}'s Game Collection` : 'Loading...';
+    route === 'authenticated' ? `${user.getUsername()}'s Games` : 'Loading...';
 
   const columns = 
   [
@@ -261,14 +260,7 @@ export function Collection() {
                 handleCreateGame={handleCreateGame} resetCreateGame={resetCreateGame} />
           </Card>
         </Col>
-      </Row>  
-      <Row gutter={[16,16]} >
-        <Col>
-          <Card style={{ height:"100%" }}>
-            <ViewAllWishlists />
-          </Card>
-        </Col>
-      </Row>
+      </Row> 
     </>
   )
 }

@@ -12,7 +12,7 @@ export function BasicLayout() {
       <Header>
         <Navbar />
       </Header>
-      <Content style={{ padding: '20px 50px' }}>
+      <Content style={{ padding: '20px 50px', minHeight: '100vh' }}>
           <Heading level={1}>Game API</Heading>
           <Outlet />
       </Content>

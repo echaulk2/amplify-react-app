@@ -1,9 +1,9 @@
 import { Form, Input, Modal } from 'antd';
 import React from 'react'
-import { Game } from '../models/Game';
-import * as Interfaces from "../shared/Interfaces";
-import * as Enums from "../shared/Enums";
-import * as Maps from "../shared/Maps";
+import { Game } from '../../models/Game';
+import * as Interfaces from "../../shared/Interfaces";
+import * as Enums from "../../shared/Enums";
+import * as Maps from "../../shared/Maps";
 
 interface ModifyGameProps { 
     game: Game;

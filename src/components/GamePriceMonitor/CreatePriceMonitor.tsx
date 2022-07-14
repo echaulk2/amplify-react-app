@@ -1,9 +1,9 @@
 import React from 'react'
 import { Button, Form, Input, Modal } from 'antd';
-import { Game } from '../models/Game';
-import { GamePriceMonitor } from '../models/GamePriceMonitor';
-import * as Enums from "../shared/Enums";
-import * as Maps from "../shared/Maps";
+import { Game } from '../../models/Game';
+import { GamePriceMonitor } from '../../models/GamePriceMonitor';
+import * as Enums from "../../shared/Enums";
+import * as Maps from "../../shared/Maps";
 
 interface CreateGameProps {
     priceMonitor: GamePriceMonitor;
@@ -37,7 +37,7 @@ function CreatePriceMonitor(props: CreateGameProps) {
     return (
         <>
             <Button onClick={() => props.initializeCreatePriceMonitor()} type="primary">Add Price Monitor</Button>
-                <Modal title="Create Price Monitor" visible={props.isCreating} okText="Save" width={500}
+            <Modal title="Create Price Monitor" visible={props.isCreating} okText="Save" width={500}
                 onCancel={() => props.resetCreatePriceMonitor() }
                 onOk={() => { props.handleCreatePriceMonitor(); props.resetCreatePriceMonitor(); } }>
                 { addPriceMonitorInputFields() }

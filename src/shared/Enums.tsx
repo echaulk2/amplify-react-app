@@ -25,6 +25,14 @@ export enum Game {
     developer = "Developer",
 }
 
+export enum GamePriceMonitor {
+    priceMonitorID = "Price Monitor ID",
+    gameID = "Game ID",
+    userID = "User ID",
+    desiredPrice = "Desired Price",
+    desiredCondition = "Desired Condition"
+}
+
 export enum ExcludedModifyKeys {
     gameID,
     userID,

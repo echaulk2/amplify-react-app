@@ -3,10 +3,10 @@ import { Button, message, Modal, Table } from 'antd';
 import { Header } from 'antd/lib/layout/layout';
 import { API } from 'aws-amplify';
 import { useEffect, useState } from 'react'
-import { Game } from '../models/Game';
-import { GamePriceMonitor } from '../models/GamePriceMonitor';
-import * as Interfaces from "../shared/Interfaces";
-import CreateGame from './CreateGame';
+import { Game } from '../../models/Game';
+import { GamePriceMonitor } from '../../models/GamePriceMonitor';
+import * as Interfaces from "../../shared/Interfaces";
+import CreateGame from '../Game/CreateGame';
 
 interface WishlistProps {
     collectionID: string;

@@ -3,9 +3,8 @@ import { Card, Col, List, message, Row, Table } from 'antd';
 import { API } from 'aws-amplify';
 import { useEffect, useState } from 'react'
 import { useParams } from "react-router-dom";
-import { Game } from '../models/Game';
-import { GamePriceMonitor } from '../models/GamePriceMonitor';
-import GamePriceMonitorComponent from './GamePriceMonitorComponent';
+import { Game } from '../../models/Game';
+import GamePriceMonitorComponent from '../GamePriceMonitor/GamePriceMonitorComponent';
 
 function GameComponent() {
     const { route, user } = useAuthenticator((context) => [

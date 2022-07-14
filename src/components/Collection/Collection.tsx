@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react';
 import { API } from 'aws-amplify';
 import { message, Card, Col, Row, Table, Modal } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import * as Interfaces from "../shared/Interfaces";
-import { Game } from '../models/Game';
+import * as Interfaces from "../../shared/Interfaces";
+import { Game } from '../../models/Game';
 import {v4 as uuidv4} from 'uuid';
 import { DefaultRecordType } from 'rc-table/lib/interface';
 import Wishlist from './Wishlist';
-import CreateGame from './CreateGame';
-import ModifyGame from './ModifyGame';
+import CreateGame from '../Game/CreateGame';
+import ModifyGame from '../Game/ModifyGame';
 import { NavLink } from 'react-router-dom';
 
 export function Collection() {

@@ -1,13 +1,13 @@
-import { Collection } from './Collection';
+import { Collection } from '../Collection/Collection';
 import { RequireAuth } from './RequireAuth';
 import { Login } from './Login';
 import { ProtectedSecond } from './ProtectSecond';
 import { Home } from './Home';
 import { BasicLayout } from './BasicLayout';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import '../App.css';
+import '../../App.css';
 import 'antd/dist/antd.css'; 
-import GameComponent from './GameComponent';
+import GameComponent from '../Game/GameComponent';
 
 export function RoutesTree() {
   return (

@@ -1,8 +1,8 @@
 import { Button, Form, Input, Modal } from 'antd';
 import React from 'react'
-import { Game } from '../models/Game';
-import * as Enums from "../shared/Enums";
-import * as Maps from "../shared/Maps";
+import { Game } from '../../models/Game';
+import * as Enums from "../../shared/Enums";
+import * as Maps from "../../shared/Maps";
 
 interface CreateGameProps {
     game: Game;

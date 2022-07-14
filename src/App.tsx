@@ -1,5 +1,5 @@
 import { Authenticator } from '@aws-amplify/ui-react';
-import { RoutesTree } from "./components/RoutesTree";
+import { RoutesTree } from "./components/Layout/RoutesTree";
 import './App.css';
 import 'antd/dist/antd.css'; 
 

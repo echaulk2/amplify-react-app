@@ -18,7 +18,6 @@ function CreateGame(props: CreateGameProps) {
         let inputFields = [] as any;
         for (let [key, value] of Object.entries(props.game)) {
             if (!Object.keys(Enums.ExcludedModifyKeys).includes(key)) {
-            console.log(key);
             inputFields.push(
                 <Form.Item label={Maps.gameMap.get(key)} key={`${key}`}>
                 <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

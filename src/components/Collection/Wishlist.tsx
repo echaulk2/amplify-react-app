@@ -20,7 +20,7 @@ function Wishlist(props: WishlistProps) {
     const [isVisible, setIsVisible] = useState(false);
     const [wishlistGames, setWishlistGames] = useState<Game[]>([]);
     const [isCreating, setIsCreating] = useState(false);
-    const [creatingGame, setCreatingGame] = useState<Game>({});  
+    const [creatingGame, setCreatingGame] = useState<Game>(new Game(""));  
 
     let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
 
@@ -42,7 +42,6 @@ function Wishlist(props: WishlistProps) {
         .then((response: Interfaces.IHttpResponse) => {
             if (response.data as Game[]) {
                 let games = response.data as Game[];
-                console.log(games);
                 setWishlistGames(games);
             }
         })
@@ -52,12 +51,12 @@ function Wishlist(props: WishlistProps) {
 
     const initializeCreateGame = () => { 
         setIsCreating(true);
-        setCreatingGame(new Game());
+        setCreatingGame(new Game(""));
     }
       
     const resetCreateGame = () => {
         setIsCreating(false);
-        setCreatingGame({});
+        setCreatingGame(new Game(""));
     }
       
       const handleCreateGame = async () => {     
@@ -78,7 +77,7 @@ function Wishlist(props: WishlistProps) {
               },
               response: true
           };
-          console.log(init);
+
           await API
             .post(apiName, path, init)
             .then((response: Interfaces.IHttpResponse) => {

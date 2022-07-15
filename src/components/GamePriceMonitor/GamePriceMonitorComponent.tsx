@@ -1,5 +1,5 @@
-import { Link, useAuthenticator } from '@aws-amplify/ui-react';
-import { Modal, Table } from 'antd';
+import { useAuthenticator } from '@aws-amplify/ui-react';
+import { Empty, Form, Input, InputNumber, message, Modal, Popconfirm, Space, Table, Typography } from 'antd';
 import { API } from 'aws-amplify';
 import { useEffect, useState } from 'react';
 import { GamePriceData } from '../../models/GamePriceData';
@@ -7,66 +7,30 @@ import { GamePriceMonitor } from '../../models/GamePriceMonitor';
 import CreatePriceMonitor from './CreatePriceMonitor';
 import * as Interfaces from "../../shared/Interfaces";
 import { Game } from '../../models/Game';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import ModifyPriceMonitor from './ModifyPriceMonitor';
 
 interface GamePriceMonitorComponentProps {
     priceMonitorData?: GamePriceMonitor[];
     game: Game
 }
-let priceMonitorData = 
-[
-    {
-        priceMonitorID: "PM-8741d8d9-9f9f-4ee4-862e-f39e5d12f9fb",
-        userID: "U-Google_113691429639784608037",
-        collectionID: "Col-116746a9-c822-4ffe-a67d-946f8188e153",
-        gameID: "G-23dcea24-7dfd-4005-bc47-fd580e4ba17c",
-        desiredPrice: 50,
-        gamePriceData: {
-            gamePriceDataID: "PD-1657674032000",
-            priceMonitorID: "PM-8741d8d9-9f9f-4ee4-862e-f39e5d12f9fb",
-            desiredPrice: 50,
-            desiredPriceExists: false,
-            lastChecked: "7/13/2022, 1:00:32 AM",
-            averagePrice: "$224.88"
-        }
-    },
-    {
-        priceMonitorID: "PM-8d64da44-b56a-4c7e-a381-2c1312e66486",
-        userID: "U-Google_113691429639784608037",
-        collectionID: "Col-116746a9-c822-4ffe-a67d-946f8188e153",
-        gameID: "G-23dcea24-7dfd-4005-bc47-fd580e4ba17c",
-        desiredPrice: 55,
-        gamePriceData: {
-            gamePriceDataID: "PD-1657674035000",
-            priceMonitorID: "PM-8d64da44-b56a-4c7e-a381-2c1312e66486",
-            desiredPrice: 55,
-            desiredPriceExists: true,
-            lastChecked: "7/13/2022, 1:00:35 AM",
-            lowestPrice: "$51.30",
-            avsdsdseragePrice: "$224.88",
-            listedItemTitle: "Elden Ring [Launch Edition]",
-            listedItemURL: "https://www.pricecharting.com/game/pal-playstation-5/elden-ring-launch-edition",
-            listedItemConsole: "PAL Playstation 5"
-        }
-    }
-]
+
 function GamePriceMonitorComponent(props: GamePriceMonitorComponentProps) {
     const { route, user } = useAuthenticator((context) => [
       context.route, 
       context.user
     ]);   
     const [priceMonitors, setPriceMonitors] = useState<GamePriceMonitor[]>([]);
+    const [tableLoading, setTableLoading] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [creatingPriceMonitor, setCreatingPriceMonitor] = useState({} as GamePriceMonitor);  
-    const [isModifying, setIsModifying] = useState(false);
-    const [modifyingPriceMonitor, setModifyingPriceMonitor] = useState({} as GamePriceMonitor);
+    const [form] = Form.useForm();
+    const [editingKey, setEditingKey] = useState('');
+    const [editingPriceMonitor, setEditingPriceMonitor] = useState<GamePriceMonitor>({} as GamePriceMonitor);
 
     let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
 
     const initializeCreatePriceMonitor = () => { 
       setIsCreating(true);
-      setCreatingPriceMonitor(new GamePriceMonitor());
+      setCreatingPriceMonitor(new GamePriceMonitor(""));
     }
     
     const resetCreatePriceMonitor = () => {
@@ -74,7 +38,8 @@ function GamePriceMonitorComponent(props: GamePriceMonitorComponentProps) {
       setCreatingPriceMonitor({} as GamePriceMonitor);
     }
 
-    const handleCreatePriceMonitor = async () => {     
+    const creating = async () => {    
+        setTableLoading(true); 
         const apiName = 'GameAPI';
         const path = '/collection/wishlist/addPriceMonitor'; 
         const init = {
@@ -93,32 +58,121 @@ function GamePriceMonitorComponent(props: GamePriceMonitorComponentProps) {
         await API
           .post(apiName, path, init)
           .then((response: Interfaces.IHttpResponse) => {
-            console.log(response);
+            if (response.status === 200 && response.data) {
+              setPriceMonitors([...priceMonitors, response.data as GamePriceMonitor]);
+              message.success(`Price monitor has been added to your game.`);
+            }            
           })
           .catch(error => {
-            console.log(error.response);
+            message.error(`Unable to add price monitor to your game.`);
         });
-    }    
+        setTableLoading(false);
+    }   
+    
+    const deleteItem = async (gamePriceMonitor: GamePriceMonitor) => {
+      Modal.confirm({
+        title: "Are you sure you want to delete this price monitor from your game?",
+        okText: "Yes",
+        okType: "danger",
+        onOk: async () => {
+          setTableLoading(true);
+          let apiName = 'GameAPI';
+          let path = '/collection/wishlist/deletePriceMonitor';
+          let body = {
+            priceMonitorID: gamePriceMonitor.priceMonitorID,
+            gameID: gamePriceMonitor.gameID,
+            collectionID: gamePriceMonitor.collectionID,
+            desiredPrice: gamePriceMonitor.desiredPrice,
+            desiredCondition: gamePriceMonitor.desiredCondition
+          };
+          let init = {
+              headers: {
+                'Authorization': userToken
+              },
+              body: body,
+              response: true
+          };
 
-
-    const initializeModifyPriceMonitor = (gamePriceMonitor: GamePriceMonitor) => { 
-        setIsModifying(true);
-        setModifyingPriceMonitor({...gamePriceMonitor});
-    }
-      
-    const resetModifyPriceMonitor = () => {
-        setIsModifying(false);
-        setModifyingPriceMonitor({});
+          await API
+            .del(apiName, path, init)
+            .then((response: Interfaces.IHttpResponse) => {
+              if (response.status === 200 && response.data) {
+                setPriceMonitors((previousState: GamePriceMonitor[]) => { 
+                  return previousState.filter((record: GamePriceMonitor) => gamePriceMonitor.priceMonitorID !== record.priceMonitorID) 
+                });
+                message.success(`Price monitor has been deleted from your collection.`);
+              }
+            })
+            .catch(error => {
+              message.error(`Unable to delete price monitor from your collection.`);
+            });     
+          setTableLoading(false);
+        }
+      });    
     }
     
-    const handleModifyPriceMonitor = async () => {
+    const EditableCell: React.FC<Interfaces.EditablePriceMonitorCellProps> = ({
+      editing,
+      dataIndex,
+      title,
+      inputType,
+      record,
+      index,
+      children,
+      ...restProps
+      }) => {
+        const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
+        return (
+          <td {...restProps}>
+            {editing ? (
+              <Form.Item
+                name={dataIndex}
+                style={{ margin: 0 }}
+                rules={[
+                  {
+                    required: true,
+                    message: `Please Input ${title}!`,
+                  }
+                ]}
+              >
+                {inputNode}
+              </Form.Item>
+            ) : (
+              children
+            )}
+          </td>
+      );
+    };
+    
+    const isEditing = (record: GamePriceMonitor) => record.priceMonitorID === editingKey;
+
+    const edit = (record: Partial<GamePriceMonitor> & { priceMonitorID: React.Key }) => {
+      form.setFieldsValue({ desiredPrice: '', desiredCondition: '', ...record });    
+      setEditingKey(record.priceMonitorID);
+      setEditingPriceMonitor({
+        priceMonitorID: record.priceMonitorID,
+        gameID: record.gameID,
+        collectionID: record?.collectionID
+      })
+    };
+
+    const cancel = () => {
+      setEditingKey('');
+      setEditingPriceMonitor({} as GamePriceMonitor);
+    };
+
+    const save = async (record: GamePriceMonitor) => {
+      try {
+        const row = (await form.validateFields()) as GamePriceMonitor;
+        setTableLoading(true);
         let apiName = 'GameAPI';
-        let path = '/colleciton/wishlist/modifyPriceMonitor'
+        let path = '/collection/wishlist/modifyPriceMonitor'
         let body = {
-          gameID: modifyingPriceMonitor.gameID,
-          collectionID: modifyingPriceMonitor.collectionID,
-          desiredCondition: modifyingPriceMonitor.desiredCondition    ,
-          desiredPrice: modifyingPriceMonitor.desiredPrice
+          priceMonitorID: record.priceMonitorID,
+          gameID: record.gameID,
+          collectionID: record.collectionID,
+          desiredCondition: row.desiredCondition,
+          desiredPrice: row.desiredPrice
         };
         let init = {
             headers: {
@@ -127,72 +181,50 @@ function GamePriceMonitorComponent(props: GamePriceMonitorComponentProps) {
             body: body,
             response: true
         };
-    
+
         await API
           .put(apiName, path, init)
-          .then((response: Interfaces.IHttpResponse)  => {
-            if (response.data) {
-                setPriceMonitors((previousState: GamePriceMonitor[]) => {
-                  return previousState.map((gamePriceMonitor: GamePriceMonitor) => {
-                    if (gamePriceMonitor.gameID === modifyingPriceMonitor.gameID) {
-                      return modifyingPriceMonitor;
-                    } else {
-                      return gamePriceMonitor;
-                    }
-                  })
-                }); 
-              }          
+          .then((response: Interfaces.IHttpResponse)  => {   
+            if (response.data && response.status === 200) {
+              const newData = [...priceMonitors];
+              const index = newData.findIndex(item => record.priceMonitorID === item.priceMonitorID);
+              if (index > -1) {
+                const item = newData[index];
+                newData.splice(index, 1, {
+                  ...item,
+                  ...row,
+                });
+                setPriceMonitors(newData);
+                setEditingKey('');
+              }
+              message.success(`Price monitor has been modified.`);
+            }
           })
           .catch(error => {
+            message.error(`Unable to modify price monitor.`);
         });     
+        setTableLoading(false);
+      } catch (errInfo) {
+        message.error(`Unable to modify price monitor.`);
+        console.log('Validate Failed:', errInfo);
       }
+    };
     
-      const handleDeletePriceMonitor = async (gamePriceMonitor: GamePriceMonitor) => {
-        Modal.confirm({
-          title: "Are you sure you want to delete this game from your collection?",
-          okText: "Yes",
-          okType: "danger",
-          onOk: async () => {
-            let apiName = 'GameAPI';
-            let path = '/collection/wishlist/deletePriceMonitor';
-            let body = {
-              priceMonitorID: gamePriceMonitor.priceMonitorID,
-              gameID: gamePriceMonitor.gameID,
-              collectionID: gamePriceMonitor.collectionID,
-              desiredPrice: gamePriceMonitor.desiredPrice,
-              desiredCondition: gamePriceMonitor.desiredCondition
-            };
-            let init = {
-                headers: {
-                  'Authorization': userToken
-                },
-                body: body,
-                response: true
-            };
-            
-            await API
-              .del(apiName, path, init)
-              .then(response => {
-                if (response.data) {
-                  setPriceMonitors((previousState: GamePriceMonitor[]) => { 
-                    return previousState.filter((record: GamePriceMonitor) => gamePriceMonitor.priceMonitorID !== record.priceMonitorID) 
-                  });
-                }
-              })
-              .catch(error => {
-                console.log(error.response);
-            });     
-          }
-        });    
-    }
-
-    let priceMonitorsColumns = 
+    let columns = 
     [
+      
         {
             title: "Price Monitor",
             dataIndex: "desiredPrice",
             key: "desiredPrice",
+            editable: true,
         },
+        {
+            title: "Condition",
+            dataIndex: "desiredCondition",
+            key: "desiredCondition",
+            editable: true,
+        },        
         {
             title: "Average Price",
             dataIndex: "gamePriceData",
@@ -230,30 +262,72 @@ function GamePriceMonitorComponent(props: GamePriceMonitorComponentProps) {
             render: (gamePriceData: GamePriceData) => gamePriceData?.lastChecked
         },
         {
-        title: "Actions",
-        key: "action",
-        render: (gamePriceData: GamePriceData) => {
-            return <>
-            <EditOutlined onClick={() => initializeModifyPriceMonitor(gamePriceData)} title="Edit" />
-            <DeleteOutlined onClick={() => handleDeletePriceMonitor(gamePriceData)} style={{color: "red", marginLeft: 12}} title="Delete" />
-            </>
-        }
+          title: 'Action',
+          dataIndex: 'action',
+          render: (_: any, record: GamePriceMonitor) => {
+            const editable = isEditing(record);
+            return editable ? (
+              <span>
+                <Typography.Link onClick={() => record.priceMonitorID && save(record)} style={{ marginRight: 8 }}>
+                  Save
+                </Typography.Link>
+                <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
+                  <a>Cancel</a>
+                </Popconfirm>
+              </span>
+            ) : (
+              <Space>
+                <Typography.Link disabled={editingKey !== ''} onClick={() => edit(record)}>
+                  Edit
+                </Typography.Link>
+                <Typography.Link disabled={editingKey !== ''} onClick={() => deleteItem(record)}>
+                  Delete
+                </Typography.Link>
+              </Space>
+            );
+          },
         }
     ]
+
+    const mergedColumns = columns.map((col: any) => {
+      if (!col.editable) {
+        return col;
+      }
+      return {
+        ...col,
+        onCell: (record: GamePriceMonitor) => ({
+          record,
+          inputType: col.dataIndex === 'desiredPrice' ? 'number' : 'text',
+          dataIndex: col.dataIndex,
+          title: col.title,
+          editing: isEditing(record),
+        }),
+      };
+    });
+
     useEffect(() => {
+      props.priceMonitorData && setPriceMonitors(props.priceMonitorData)
     }, []) 
+
     return (
         <>
-            { true ? 
-                <Table dataSource={priceMonitorData} columns={priceMonitorsColumns} /> : 
-                <p>No Price Monitors exist on this game.</p>
+            { props.priceMonitorData && props.priceMonitorData?.length > 0 ?
+              <Form form={form} component={false}>
+                <Table dataSource={priceMonitors} columns={mergedColumns} loading={tableLoading} rowClassName="editable-row"
+                  pagination={{ pageSize: 5 }} rowKey={(record: GamePriceMonitor) => record.priceMonitorID }                  
+                  components={{
+                    body: {
+                      cell: EditableCell,
+                    },
+                  }} 
+                />
+              </Form> : 
+              <Empty description="No price monitors found." />
             }
             <CreatePriceMonitor priceMonitor={creatingPriceMonitor} isCreating={isCreating} setCreatingPriceMonitor={setCreatingPriceMonitor} initializeCreatePriceMonitor={initializeCreatePriceMonitor} 
-                handleCreatePriceMonitor={handleCreatePriceMonitor} resetCreatePriceMonitor={resetCreatePriceMonitor} />
-            <ModifyPriceMonitor priceMonitor={modifyingPriceMonitor} isModifying={isModifying} setModifyPriceMonitor={setModifyingPriceMonitor}
-                handleModifyPriceMonitor={handleModifyPriceMonitor} resetModifyPriceMonitor={resetModifyPriceMonitor} />
+                handleCreatePriceMonitor={creating} resetCreatePriceMonitor={resetCreatePriceMonitor} />
         </>
     )
 }
 
-export default GamePriceMonitorComponent
+export default GamePriceMonitorComponent;

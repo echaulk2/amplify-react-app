@@ -33,3 +33,14 @@ h1.amplify-heading--1 {
   border-radius: 5px;
   height: 100%;
 }
+
+.editable-row .ant-form-item-explain {
+  position: absolute;
+  top: 100%;
+  font-size: 12px;
+}
+
+.price-monitor-btn {
+  position: absolute !important;
+  bottom: 5%;
+}

@@ -2,7 +2,7 @@ import { GamePriceMonitor } from "./GamePriceMonitor";
 
 export class Game { 
     //Fields 
-    gameID?: string;
+    gameID: string;
     userID?: string;
     gameName?: string;
     yearReleased?: number;
@@ -13,7 +13,7 @@ export class Game {
     priceMonitorData?: GamePriceMonitor[];
     
     //Constructor 
-    constructor(gameID?: string, userID?: string, gameName?:string, yearReleased?:number, genre?:string, console?:string, developer?:string, collectionID?:string, priceMonitorData?: GamePriceMonitor[]) { 
+    constructor(gameID: string, userID?: string, gameName?:string, yearReleased?:number, genre?:string, console?:string, developer?:string, collectionID?:string, priceMonitorData?: GamePriceMonitor[]) { 
        this.gameID = gameID
        this.userID = userID   
        this.gameName = gameName

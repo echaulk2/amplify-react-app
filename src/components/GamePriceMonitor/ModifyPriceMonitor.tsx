@@ -24,7 +24,7 @@ function ModifyPriceMonitor(props: ModifyPriceMonitorProps) {
                     <Input value={props.priceMonitor[property as keyof Interfaces.IModifyPriceMonitorInputFields]} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         let targetValue = e.target.value;
                         props.setModifyPriceMonitor((previousValues: GamePriceMonitor) => {
-                        return {...previousValues, [property]: targetValue };
+                            return {...previousValues, [property]: targetValue };
                         });
                     }}                   
                     />

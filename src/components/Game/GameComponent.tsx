@@ -1,5 +1,5 @@
 import { useAuthenticator } from '@aws-amplify/ui-react';
-import { Card, Col, List, message, Row, Table } from 'antd';
+import { Card, Col, Empty, List, message, Row, Table } from 'antd';
 import { API } from 'aws-amplify';
 import { useEffect, useState } from 'react'
 import { useParams } from "react-router-dom";
@@ -40,6 +40,7 @@ function GameComponent() {
           .then(response => {
             if (response.data) {
               setGetGame(response.data);
+              console.log(game);
               setisLoading(false);
             }
           })
@@ -81,7 +82,7 @@ function GameComponent() {
                         </List>
                     </Card>
                 </Col>
-                <Col>
+                <Col span={20}>
                     <Card title={game.gameName && `${game.gameName} Price Monitors`} loading={isLoading}>
                         <GamePriceMonitorComponent priceMonitorData={game.priceMonitorData} game={game} />
                     </Card>

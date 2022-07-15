@@ -36,7 +36,7 @@ function CreatePriceMonitor(props: CreateGameProps) {
     }
     return (
         <>
-            <Button onClick={() => props.initializeCreatePriceMonitor()} type="primary">Add Price Monitor</Button>
+            <Button className="price-monitor-btn" onClick={() => props.initializeCreatePriceMonitor()} type="primary">Add Price Monitor</Button>
             <Modal title="Create Price Monitor" visible={props.isCreating} okText="Save" width={500}
                 onCancel={() => props.resetCreatePriceMonitor() }
                 onOk={() => { props.handleCreatePriceMonitor(); props.resetCreatePriceMonitor(); } }>

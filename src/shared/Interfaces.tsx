@@ -29,3 +29,23 @@ export interface IModifyPriceMonitorInputFields {
     desiredPrice: string;
     desiredCondition: string;
 }
+
+export interface EditableGameCellProps extends React.HTMLAttributes<HTMLElement> {
+    editing: boolean;
+    dataIndex: string;
+    title: any;
+    inputType: 'number' | 'text';
+    record: Game;
+    index: number;
+    children: React.ReactNode;
+}
+
+export interface EditablePriceMonitorCellProps extends React.HTMLAttributes<HTMLElement> {
+    editing: boolean;
+    dataIndex: string;
+    title: any;
+    inputType: 'number' | 'text';
+    record: GamePriceMonitor;
+    index: number;
+    children: React.ReactNode;
+}

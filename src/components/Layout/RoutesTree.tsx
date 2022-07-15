@@ -1,13 +1,12 @@
-import { Collection } from '../Collection/Collection';
+import { CollectionView } from '../Collection/CollectionView';
 import { RequireAuth } from './RequireAuth';
 import { Login } from './Login';
-import { ProtectedSecond } from './ProtectSecond';
 import { Home } from './Home';
 import { BasicLayout } from './BasicLayout';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import '../../App.css';
 import 'antd/dist/antd.css'; 
-import GameComponent from '../Game/GameComponent';
+import GameView from '../Game/GameView';
 
 export function RoutesTree() {
   return (
@@ -19,15 +18,7 @@ export function RoutesTree() {
             path="/collection"
             element={
               <RequireAuth>
-                <Collection />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/protected2"
-            element={
-              <RequireAuth>
-                <ProtectedSecond />
+                <CollectionView />
               </RequireAuth>
             }
           />
@@ -35,7 +26,7 @@ export function RoutesTree() {
             path="/game/:gameID" 
             element={
             <RequireAuth>
-              <GameComponent />
+              <GameView />
             </RequireAuth>} 
           />
           <Route path="/login" element={<Login />} />

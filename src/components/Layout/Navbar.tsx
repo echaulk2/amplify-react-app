@@ -20,13 +20,10 @@ export function Navbar() {
         <Menu.Item onClick={() => navigate('/collection')} key={uuidv4()}>
           Collection
         </Menu.Item>
-        <Menu.Item onClick={() => navigate('/protected2')} key={uuidv4()}>
-          Second Protected Route
-        </Menu.Item>
         {route !== 'authenticated' ? (
-          <Menu.Item onClick={() => navigate('/login')} key={uuidv4()}>Login</Menu.Item>
+          <Menu.Item onClick={() => navigate('/login')} key={uuidv4()} style={{ marginLeft: 'auto' }}>Login</Menu.Item>
         ) : (
-          <Menu.Item onClick={() => logOut()} key={uuidv4()}>Logout</Menu.Item>
+          <Menu.Item onClick={() => logOut()} key={uuidv4()} style={{ marginLeft: 'auto' }}>Logout</Menu.Item>
         )}
     </Menu>
   );

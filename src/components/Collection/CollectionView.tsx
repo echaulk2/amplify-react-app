@@ -8,7 +8,7 @@ import { DefaultRecordType } from 'rc-table/lib/interface';
 import CreateGame from '../Game/CreateGame';
 import { NavLink } from 'react-router-dom';
 
-export function Collection() {
+export function CollectionView() {
   const { route, user } = useAuthenticator((context) => [
     context.route, 
     context.user
@@ -127,12 +127,8 @@ export function Collection() {
         setTableLoading(false);
       }
     });    
-  }
-
-  const displayMessage =
-    route === 'authenticated' ? `${user.getUsername()}'s Games` : 'Loading...';
-    
-    const EditableCell: React.FC<Interfaces.EditableGameCellProps> = ({
+  }    
+  const EditableCell: React.FC<Interfaces.EditableGameCellProps> = ({
       editing,
       dataIndex,
       title,
@@ -141,7 +137,7 @@ export function Collection() {
       index,
       children,
       ...restProps
-    }) => {
+  }) => {
     const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
     return (
       <td {...restProps}>
@@ -164,7 +160,7 @@ export function Collection() {
       </td>
     );
   };
-  
+
   const isEditing = (record: Game) => record.gameID === editingKey;
 
   const edit = (record: Partial<Game> & { gameID: React.Key }) => {
@@ -329,7 +325,7 @@ export function Collection() {
       <Row gutter={[16, 16]}>
         <Col span={12}>
           <Card style={{ height: "100%" }}>
-            <Heading level={1}>{displayMessage}</Heading>
+            <Heading level={1}>{user.getUsername()}'s Game Collection</Heading>
             <Form form={form} component={false}>
               <Table dataSource={collection} columns={mergedColumns} size="small" 
                 rowKey={(record: Game) => record.gameID } className="collection-table" 

@@ -5,8 +5,8 @@ import { message, Card, Col, Row, Table, Modal, InputNumber, Input, Form, Typogr
 import * as Interfaces from "../../shared/Interfaces";
 import { Game } from '../../models/Game';
 import { DefaultRecordType } from 'rc-table/lib/interface';
-import CreateGame from '../Game/CreateGame';
 import { NavLink } from 'react-router-dom';
+import SearchGame from '../Game/SearchGame';
 
 export function CollectionView() {
   const { route, user } = useAuthenticator((context) => [
@@ -69,12 +69,13 @@ export function CollectionView() {
         body: {
             gameName: creatingGame.gameName,
             developer: creatingGame.developer,
-            yearReleased: Number(creatingGame.yearReleased),
+            yearReleased: (creatingGame.yearReleased) ? Number(creatingGame.yearReleased) : undefined,
             genre: creatingGame.genre,
             console: creatingGame.console
         },
         response: true
     };
+    console.log(init);
     await API
       .post(apiName, path, init)
       .then((response: Interfaces.IHttpResponse) => {
@@ -128,6 +129,7 @@ export function CollectionView() {
       }
     });    
   }    
+  
   const EditableCell: React.FC<Interfaces.EditableGameCellProps> = ({
       editing,
       dataIndex,
@@ -337,11 +339,11 @@ export function CollectionView() {
                 }} rowClassName="editable-row"
               /> 
             </Form>
-            <CreateGame game={creatingGame} isCreating={isCreating} setCreatingGame={setCreatingGame} initializeCreateGame={initializeCreateGame} 
-              handleCreateGame={handleCreateGame} resetCreateGame={resetCreateGame} />
+            <Heading level={4} style={{ paddingBottom: 20 }}>Search for a game to add to your collection</Heading>
+            <SearchGame creatingGame={creatingGame} handleCreateGame={ handleCreateGame } setCreatingGame={setCreatingGame} resetCreateGame={resetCreateGame} initializeCreateGame={initializeCreateGame} />
           </Card>
         </Col>
-      </Row> 
+      </Row>
     </>
   )
 }

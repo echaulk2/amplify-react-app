@@ -55,7 +55,11 @@ function SearchGame(props: searchGameProps) {
     const [gameName, setGameName] = useState('');
     
     const onFinish = async () => {
-        let platformData = await getPlatform();
+        let platformData = await getPlatform()
+        let ids = platformData.map((platform: IGDB_Platform) => {
+            return platform.id;
+        })
+        console.log(ids);
         await axios({
             url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/games",
             method: 'POST',
@@ -66,11 +70,11 @@ function SearchGame(props: searchGameProps) {
             data: `fields name, summary, id, platforms; 
                     search "${gameName}"; 
                     limit 10; 
-                    where platforms = (${platformData.id});`
+                    where platforms = (${ids});`
           })
             .then((response: any) => {
                 console.log(response);
-                let results = response.data.map((element:IGDB) => { return {...element, platforms: platformData.name}; });
+                let results = response.data.map((element:IGDB) => { return {...element, platforms: platformData[0].name } } );
                 setGames(results);
             })
             .catch((err: any) => {
@@ -79,7 +83,7 @@ function SearchGame(props: searchGameProps) {
     }
     
     const getPlatform = async (): Promise<any> => {
-        let platformData = {} as IGDB_Platform;
+        let platformData: IGDB_Platform[] = [] as IGDB_Platform[];
         await axios({
             url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/platforms",
             method: 'POST',
@@ -87,28 +91,17 @@ function SearchGame(props: searchGameProps) {
                 'Accept': 'application/json',
                 'x-api-key': 'eDnXYfrtHz6gerFFxbZXD5VqNj1q9k594OHoV0iH'
             },
-            data: `fields id, name; search "${platform}"; limit 1;`
+            data: `fields id, name; search "${platform}";`
           })
             .then((response: any) => {
                 console.log(response);
-                platformData = response.data[0] as IGDB_Platform;
+                platformData = response.data as IGDB_Platform[];
             })
             .catch((err: any) => {
                 console.error(err);
             });
         return platformData;
     }
-
-    const formItemLayout = {
-        labelCol: {
-          xs: { span: 16 },
-          sm: { span: 4 },
-        },
-        wrapperCol: {
-          xs: { span: 16 },
-          sm: { span: 12 },
-        },
-    };
 
     const columns = 
     [   
@@ -166,11 +159,13 @@ function SearchGame(props: searchGameProps) {
     return (
         <>
             <Form
-                {...formItemLayout}
+                labelCol={{ span: 4 }}
+                wrapperCol={{ span: 16 }}
                 form={form}
                 name="Game Search"
                 onFinish={onFinish}
                 scrollToFirstError
+                labelAlign='left'
                 >
                 <Form.Item
                     name="name"

@@ -1,10 +1,11 @@
-import { Button, Card, Form, Input, Modal, Popconfirm, Table, Typography } from 'antd'
+import { Button, Card, Form, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd'
 import Search from 'antd/lib/input/Search';
 import React, { useEffect } from 'react'
 import { useState } from 'react';
 import axios from 'axios';
 import { Game } from '../../models/Game';
 import { setTimeout } from 'timers';
+import { Heading } from '@aws-amplify/ui-react';
 
 interface IGDB {
     name: string;
@@ -40,8 +41,9 @@ interface IFormValues {
 
 interface searchGameProps {
     setCreatingGame: (game: React.SetStateAction<Game>) => void;
+    isCreating: boolean;
     initializeCreateGame: () => void;
-    handleCreateGame: () => Promise<void>;
+    handleCreateGame: (game: Game) => Promise<void>;
     resetCreateGame: () => void;
     creatingGame: Game;
 }
@@ -136,21 +138,31 @@ function SearchGame(props: searchGameProps) {
           dataIndex: "id",
           key: "id",
           render: (gameID: string, row: IGDB) => 
-            <Popconfirm title="Sure to add?" onConfirm={ (e?: React.MouseEvent<HTMLElement, MouseEvent> ) => 
-                { 
-                    props.initializeCreateGame();
-                    props.setCreatingGame((previousValues: Game) => {
-                        return {...previousValues, gameID: gameID, gameName: row.name };
-                    });
-                    props.handleCreateGame(); 
-                }
-            }>
-              <a>Add Game to Collection</a>
-            </Popconfirm>
+          <>
+            <Typography.Link onClick={ () => { handleAddGameToCollection(gameID, row); } }>
+              Add Game
+            </Typography.Link>
+          </>
         },
         
     ]
     
+    const handleAddGameToCollection = (gameID: string, row: IGDB) => {
+        Modal.confirm({
+            title: "Are you sure you want to add this game to your collection?",
+            okText: "Yes",
+            okType: "danger",
+            onOk: async () => {
+                let newGame = new Game(gameID, undefined, row.name);
+                props.handleCreateGame(newGame);              
+            }
+        });   
+    }
+    
+    const resetForm = () => {
+        setGames([]);
+    }
+
     return (
         <>
             <Form
@@ -185,14 +197,19 @@ function SearchGame(props: searchGameProps) {
                     <Input value={platform} onChange={e => setPlatform(e.target.value)} />
                 </Form.Item>
                 <Form.Item>
-                    <Button type="primary" htmlType="submit">
-                    Search
-                    </Button>
+                    <Space wrap>
+                        <Button type="primary" htmlType="submit">
+                        Search
+                        </Button>
+                        <Button type="primary" htmlType="reset" onClick={ () => resetForm() }>
+                        Clear
+                        </Button>
+                    </Space>
                 </Form.Item>
             </Form>
             { games.length > 0 && 
                 <Table dataSource={[...games]} columns={columns} 
-                pagination={{ pageSize: 5 }} /> }
+                pagination={{ pageSize: 5 }} /> }            
         </>
     )
 }

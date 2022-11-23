@@ -9,7 +9,7 @@ interface CreateGameProps {
     isCreating: boolean;
     setCreatingGame: (game: React.SetStateAction<Game>) => void;
     initializeCreateGame: () => void;
-    handleCreateGame: () => Promise<void>;
+    handleCreateGame: (game: Game) => Promise<void>;
     resetCreateGame: () => void;
 }
 
@@ -40,7 +40,7 @@ function CreateGame(props: CreateGameProps) {
         <Button onClick={() => props.initializeCreateGame()} type="primary">Add Game</Button>
             <Modal title="Add game to your collection" visible={props.isCreating} okText="Save"
             onCancel={() => props.resetCreateGame() }
-            onOk={() => { props.handleCreateGame(); props.resetCreateGame(); } }>
+            onOk={() => { props.resetCreateGame(); } }>
             { addGameInputFields() }
         </Modal>
     </>

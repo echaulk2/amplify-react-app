@@ -84,7 +84,8 @@ function SearchGame(props: searchGameProps) {
     }
 
     const formatData = (data: IGDB_Game[], platformData: IGDB_Game[]): any => {
-        let results = data.map((element:IGDB_Game) => {
+        //Map platform IDs to platform names and convert UNIX time to just the year
+        let results: any = data.map((element:IGDB_Game) => {
             let platformNames: string[] = [];
             element.platforms.forEach((platformID: number) => {
                  let name = platformData.filter((item: IGDB_Platform) => {
@@ -92,8 +93,25 @@ function SearchGame(props: searchGameProps) {
                 });
                 name[0] && platformNames.push(name[0]?.name);
             });                    
-            return {...element, first_release_date: new Date(element.first_release_date * 1000).getFullYear() || undefined, platforms: platformNames.join(', ') || undefined } } 
+            return {...element, first_release_date: new Date(element.first_release_date * 1000).getFullYear() || undefined, platforms: platformNames || undefined } } 
         );
+
+        //Separate games with multiple platforms into separate records
+        let gamesWithMultiplePlatforms = results.filter((game: IGDB_Game) => {
+            return game.platforms.length > 1;
+        });
+
+        gamesWithMultiplePlatforms.forEach((game: IGDB_Game) => {
+            let index = results.findIndex((object: IGDB_Game) => object.id == game.id );
+            
+            results = results.filter((oldGame: IGDB_Game) => { return game.id != oldGame.id });
+
+            game.platforms.forEach((platform: any) => {
+                results.splice(index, 0, {...game, id: `${game.id}-${platform}`, platforms: platform });
+                index++;
+            });
+        });
+
         return results;
     }
 
@@ -147,7 +165,7 @@ function SearchGame(props: searchGameProps) {
             okText: "Yes",
             okType: "danger",
             onOk: async () => {
-                let newGame = new Game(gameID, undefined, row.name, row.first_release_date, row.platforms.toString());
+                let newGame = new Game(gameID, undefined, row.name, row.first_release_date, undefined, row.platforms.toString());
                 props.handleCreateGame(newGame);              
             }
         });   

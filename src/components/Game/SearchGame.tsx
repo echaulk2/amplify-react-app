@@ -1,4 +1,4 @@
-import { Button, Card, Form, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd';
+import { Button, Card, Empty, Form, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd';
 import React, { useEffect } from 'react';
 import { useState } from 'react';
 import axios from 'axios';
@@ -7,15 +7,26 @@ import { Game } from '../../models/Game';
 interface IGDB_Game {
     name: string;
     id: number;
-    genres: number;
+    genres: number[];
     first_release_date: number;
-    involved_companies: string;
     platforms: number[];
     summary: string;
-    storyline: string;    
+    storyline: string;  
+    developer: string;  
 }
 
 interface IGDB_Platform {
+    id: number;
+    name: string;
+}
+
+interface IGDB_Developer {
+    id: number;
+    name: string;
+    developed: number[];
+}
+
+interface IGDB_Genre {
     id: number;
     name: string;
 }
@@ -34,12 +45,17 @@ function SearchGame(props: searchGameProps) {
     const [games, setGames] = useState<IGDB_Game[]>([]);
     const [platform, setPlatform] = useState('');
     const [gameName, setGameName] = useState('');
+    const [tableLoading, setTableLoading] = useState(false);
     
     const onFinish = async () => {
-        let platformData = await getPlatform()
-        let ids = platformData.map((platform: IGDB_Platform) => {
-            return platform.id;
-        })
+        setTableLoading(true);
+        let platformData = await getPlatform();
+
+        if (!platformData.length) {
+            setGames([]);
+            setTableLoading(false);
+            return;
+        }
 
         await axios({
             url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/games",
@@ -48,18 +64,25 @@ function SearchGame(props: searchGameProps) {
                 'Accept': 'application/json',
                 'x-api-key': 'eDnXYfrtHz6gerFFxbZXD5VqNj1q9k594OHoV0iH'
             },
-            data: `fields name, summary, id, platforms, first_release_date; 
+            data: `fields name, summary, id, platforms, first_release_date, genres; 
                     search "${gameName}"; 
                     limit 25; 
-                    where platforms = (${ids});`
+                    where platforms = (${platformData.map((platform: IGDB_Platform) => { return platform.id; })});`
           })
-            .then((response: any) => {
-                let results = formatData(response.data, platformData);
-                setGames(results);
+            .then(async (response: any) => {
+                if (response.data.length > 0) {
+                    let developerData = await getDevelopers(response.data);
+                    let genreData = await getGenres(response.data);
+                    let results = formatData(response.data, platformData, developerData, genreData);
+                    setGames(results);
+                } else {
+                    setGames([]);
+                }                    
             })
             .catch((err: any) => {
                 console.error(err);
-            });
+        });
+        setTableLoading(false);
     }
     
     const getPlatform = async (): Promise<any> => {
@@ -83,8 +106,55 @@ function SearchGame(props: searchGameProps) {
         return platformData;
     }
 
-    const formatData = (data: IGDB_Game[], platformData: IGDB_Game[]): any => {
-        //Map platform IDs to platform names and convert UNIX time to just the year
+    const getDevelopers = async (data: IGDB_Game[]): Promise<IGDB_Developer[]> => {
+        let developerData: IGDB_Developer[] = [];
+        
+        await axios({
+            url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/companies",
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'x-api-key': 'eDnXYfrtHz6gerFFxbZXD5VqNj1q9k594OHoV0iH'
+            },
+            data: `fields id, name, developed; where developed = (${data.map((game: IGDB_Game) => { return game.id })});`
+          })
+            .then((response: any) => {
+                developerData = response.data;         
+            })
+            .catch((err: any) => {
+                console.error(err);
+        });
+        return developerData;
+    }
+
+    const getGenres = async (data: IGDB_Game[]): Promise<IGDB_Genre[]> => {
+        let genreData: IGDB_Genre[] = [];
+        let genreIDs = data.map((game: IGDB_Game) => { return game?.genres?.[0] }).filter((element) => element !== undefined);
+
+        await axios({
+            url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/genres",
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'x-api-key': 'eDnXYfrtHz6gerFFxbZXD5VqNj1q9k594OHoV0iH'
+            },
+            data: `fields id, name; where id = (${genreIDs});`
+          })
+            .then((response: any) => {
+                genreData = response.data;         
+            })
+            .catch((err: any) => {
+                console.error(err);
+        });
+        return genreData;
+    }
+
+    // Formats IGDB Relational Data from API calls to game format
+        // -  Map platform IDs to platform names, and then separate games with multiple platforms into separate records
+        // -  Convert UNIX time to just the year
+        // -  Map developer IDs to developer names
+        // -  Map the first genre associated with the game to the genre name            
+    const formatData = (data: IGDB_Game[], platformData: IGDB_Game[], developerData: IGDB_Developer[], genreData: IGDB_Genre[]): any => {
         let results: any = data.map((element:IGDB_Game) => {
             let platformNames: string[] = [];
             element.platforms.forEach((platformID: number) => {
@@ -93,7 +163,13 @@ function SearchGame(props: searchGameProps) {
                 });
                 name[0] && platformNames.push(name[0]?.name);
             });                    
-            return {...element, first_release_date: new Date(element.first_release_date * 1000).getFullYear() || undefined, platforms: platformNames || undefined } } 
+
+            return {...element, 
+                first_release_date: new Date(element.first_release_date * 1000).getFullYear() || undefined, 
+                platforms: platformNames || undefined,
+                developer: developerData.find((developer: IGDB_Developer) => developer.developed.find((id: number) => id == element.id))?.name, 
+                genres: genreData.find((genre: IGDB_Genre) => genre.id == element?.genres?.[0])?.name } 
+            } 
         );
 
         //Separate games with multiple platforms into separate records
@@ -121,11 +197,9 @@ function SearchGame(props: searchGameProps) {
         title: "Game Name",
         dataIndex: "name",
         key: "name",
-        ellipsis: true,
-        width: '25%'
         },
         {
-        title: "Platform",
+        title: "Console",
         dataIndex: "platforms",
         key: "platforms"
         },
@@ -133,6 +207,11 @@ function SearchGame(props: searchGameProps) {
         title: "Developer",
         dataIndex: "developer",
         key: "developer"
+        },
+        {
+        title: "Genre",
+        dataIndex: "genres",
+        key: "genres"
         },
         {
         title: "Year Released",
@@ -165,7 +244,7 @@ function SearchGame(props: searchGameProps) {
             okText: "Yes",
             okType: "danger",
             onOk: async () => {
-                let newGame = new Game(gameID, undefined, row.name, row.first_release_date, undefined, row.platforms.toString());
+                let newGame = new Game(gameID, undefined, row.name, row.first_release_date, row.genres.toString(), row.platforms.toString(), row.developer);
                 props.handleCreateGame(newGame);              
             }
         });   
@@ -173,13 +252,14 @@ function SearchGame(props: searchGameProps) {
     
     const resetForm = () => {
         setGames([]);
+        setTableLoading(false);
     }
 
     return (
         <>
             <Form
-                labelCol={{ span: 4 }}
-                wrapperCol={{ span: 16 }}
+                labelCol={{ span: 3 }}
+                wrapperCol={{ span: 10 }}
                 form={form}
                 name="Game Search"
                 onFinish={onFinish}
@@ -221,9 +301,8 @@ function SearchGame(props: searchGameProps) {
                     </Space>
                 </Form.Item>
             </Form>
-            { games.length > 0 && 
-                <Table dataSource={[...games]} columns={columns} 
-                pagination={{ pageSize: 5 }} /> }            
+                    <Table dataSource={[...games]} columns={columns} loading={tableLoading}
+                    pagination={{ pageSize: 5 }} />
         </>
     )
 }

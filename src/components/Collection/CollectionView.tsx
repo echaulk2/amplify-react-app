@@ -239,15 +239,15 @@ export function CollectionView() {
       sorter: (a: DefaultRecordType, b: DefaultRecordType) => a.gameName.localeCompare(b.gameName)
     },
     {
-      title: "Developer",
-      dataIndex: "developer",
-      key: "developer",      
+      title: "Console",
+      dataIndex: "console",
+      key: "console",      
       editable: true,
     },
     {
-      title: "Year Released",
-      dataIndex: "yearReleased",
-      key: "yearReleased",      
+      title: "Developer",
+      dataIndex: "developer",
+      key: "developer",      
       editable: true,
     },
     {
@@ -257,9 +257,9 @@ export function CollectionView() {
       editable: true,
     },
     {
-      title: "Console",
-      dataIndex: "console",
-      key: "console",      
+      title: "Year Released",
+      dataIndex: "yearReleased",
+      key: "yearReleased",      
       editable: true,
     },
     {

@@ -1,5 +1,5 @@
-import { Button, Card, Empty, Form, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd';
-import React, { useEffect } from 'react';
+import { Button, Empty, Form, Input, message, Modal, Space, Table, Tooltip, Typography } from 'antd';
+import React from 'react';
 import { useState } from 'react';
 import axios from 'axios';
 import { Game } from '../../models/Game';
@@ -46,14 +46,17 @@ function SearchGame(props: searchGameProps) {
     const [platform, setPlatform] = useState('');
     const [gameName, setGameName] = useState('');
     const [tableLoading, setTableLoading] = useState(false);
+    const [showTable, setShowTable] = useState(false);
     
     const onFinish = async () => {
+        setShowTable(true);
         setTableLoading(true);
         let platformData = await getPlatform();
 
         if (!platformData.length) {
             setGames([]);
             setTableLoading(false);
+            message.error(`Unable to find platform data for ${platform}.`);
             return;
         }
 
@@ -70,7 +73,7 @@ function SearchGame(props: searchGameProps) {
                     where platforms = (${platformData.map((platform: IGDB_Platform) => { return platform.id; })});`
           })
             .then(async (response: any) => {
-                if (response.data.length > 0) {
+                if (response.data.length) {
                     let developerData = await getDevelopers(response.data);
                     let genreData = await getGenres(response.data);
                     let results = formatData(response.data, platformData, developerData, genreData);
@@ -80,13 +83,14 @@ function SearchGame(props: searchGameProps) {
                 }                    
             })
             .catch((err: any) => {
+                message.error("Error fetching game data.");
                 console.error(err);
         });
         setTableLoading(false);
     }
     
     const getPlatform = async (): Promise<any> => {
-        let platformData;
+        let platformData: IGDB_Platform[] = [];
         
         await axios({
             url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/platforms",
@@ -101,6 +105,7 @@ function SearchGame(props: searchGameProps) {
                 platformData = response.data;         
             })
             .catch((err: any) => {
+                message.error("Error fetching platform data.");
                 console.error(err);
         });
         return platformData;
@@ -122,6 +127,7 @@ function SearchGame(props: searchGameProps) {
                 developerData = response.data;         
             })
             .catch((err: any) => {
+                message.error("Error fetching developer data.");
                 console.error(err);
         });
         return developerData;
@@ -144,6 +150,7 @@ function SearchGame(props: searchGameProps) {
                 genreData = response.data;         
             })
             .catch((err: any) => {
+                message.error("Error fetching genre data.");
                 console.error(err);
         });
         return genreData;
@@ -222,7 +229,14 @@ function SearchGame(props: searchGameProps) {
         title: "Summary",
         dataIndex: "summary",
         key: "summary",
-        ellipsis: true
+        ellipsis: {
+            showTitle: false,
+        },
+        render: (summary: any) => (
+            <Tooltip placement="topLeft" title={summary}>
+              {summary}
+            </Tooltip>
+          ),
         },
         {
           title: "Action",
@@ -253,6 +267,7 @@ function SearchGame(props: searchGameProps) {
     const resetForm = () => {
         setGames([]);
         setTableLoading(false);
+        setShowTable(false);
     }
 
     return (
@@ -301,8 +316,14 @@ function SearchGame(props: searchGameProps) {
                     </Space>
                 </Form.Item>
             </Form>
-                    <Table dataSource={[...games]} columns={columns} loading={tableLoading}
-                    pagination={{ pageSize: 5 }} />
+            {
+                showTable &&
+                    <Table locale={{emptyText:<Empty description={!tableLoading && "No games found." } />}} 
+                        dataSource={[...games]} columns={columns} 
+                        loading={tableLoading} pagination={{ pageSize: 5 }} />
+            }
+            
+
         </>
     )
 }

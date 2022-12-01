@@ -3,6 +3,7 @@ import React from 'react';
 import { useState } from 'react';
 import axios from 'axios';
 import { Game } from '../../models/Game';
+import { useAuthenticator } from '@aws-amplify/ui-react';
 
 interface IGDB_Game {
     name: string;
@@ -13,6 +14,17 @@ interface IGDB_Game {
     summary: string;
     storyline: string;  
     developer: string;  
+}
+
+interface GameRecord {
+    gameID: string;
+    gameName: string;
+    platforms?: string[]
+    console?: string;
+    genre?: string;
+    developer?: string;
+    summary?: string;
+    yearReleased?: number;    
 }
 
 interface IGDB_Platform {
@@ -41,12 +53,15 @@ interface searchGameProps {
 }
 
 function SearchGame(props: searchGameProps) {  
+    const { user } = useAuthenticator((context) => [context.user]);
     const [form] = Form.useForm();
-    const [games, setGames] = useState<IGDB_Game[]>([]);
+    const [games, setGames] = useState<GameRecord[]>([]);
     const [platform, setPlatform] = useState('');
     const [gameName, setGameName] = useState('');
     const [tableLoading, setTableLoading] = useState(false);
     const [showTable, setShowTable] = useState(false);
+    
+    let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
     
     const onFinish = async () => {
         setShowTable(true);
@@ -61,11 +76,11 @@ function SearchGame(props: searchGameProps) {
         }
 
         await axios({
-            url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/games",
+            url: " https://4fu7yxd9ml.execute-api.us-east-1.amazonaws.com/production/v4/games",
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
-                'x-api-key': 'eDnXYfrtHz6gerFFxbZXD5VqNj1q9k594OHoV0iH'
+                'Authorization': userToken
             },
             data: `fields name, summary, id, platforms, first_release_date, genres; 
                     search "${gameName}"; 
@@ -93,11 +108,11 @@ function SearchGame(props: searchGameProps) {
         let platformData: IGDB_Platform[] = [];
         
         await axios({
-            url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/platforms",
+            url: " https://4fu7yxd9ml.execute-api.us-east-1.amazonaws.com/production/v4/platforms",
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
-                'x-api-key': 'eDnXYfrtHz6gerFFxbZXD5VqNj1q9k594OHoV0iH'
+                'Authorization': userToken
             },
             data: `fields id, name; search "${platform}";`
           })
@@ -115,11 +130,11 @@ function SearchGame(props: searchGameProps) {
         let developerData: IGDB_Developer[] = [];
         
         await axios({
-            url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/companies",
+            url: " https://4fu7yxd9ml.execute-api.us-east-1.amazonaws.com/production/v4/companies",
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
-                'x-api-key': 'eDnXYfrtHz6gerFFxbZXD5VqNj1q9k594OHoV0iH'
+                'Authorization': userToken
             },
             data: `fields id, name, developed; where developed = (${data.map((game: IGDB_Game) => { return game.id })});`
           })
@@ -138,11 +153,11 @@ function SearchGame(props: searchGameProps) {
         let genreIDs = data.map((game: IGDB_Game) => { return game?.genres?.[0] }).filter((element) => element !== undefined);
 
         await axios({
-            url: "https://aol7dnm2n0.execute-api.us-west-2.amazonaws.com/production/v4/genres",
+            url: " https://4fu7yxd9ml.execute-api.us-east-1.amazonaws.com/production/v4/genres",
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
-                'x-api-key': 'eDnXYfrtHz6gerFFxbZXD5VqNj1q9k594OHoV0iH'
+                'Authorization': userToken
             },
             data: `fields id, name; where id = (${genreIDs});`
           })
@@ -161,8 +176,8 @@ function SearchGame(props: searchGameProps) {
         // -  Convert UNIX time to just the year
         // -  Map developer IDs to developer names
         // -  Map the first genre associated with the game to the genre name            
-    const formatData = (data: IGDB_Game[], platformData: IGDB_Game[], developerData: IGDB_Developer[], genreData: IGDB_Genre[]): any => {
-        let results: any = data.map((element:IGDB_Game) => {
+    const formatData = (data: IGDB_Game[], platformData: IGDB_Game[], developerData: IGDB_Developer[], genreData: IGDB_Genre[]): GameRecord[] => {
+        let results = data.map((element:IGDB_Game): GameRecord => {
             let platformNames: string[] = [];
             element.platforms.forEach((platformID: number) => {
                  let name = platformData.filter((item: IGDB_Platform) => {
@@ -171,26 +186,30 @@ function SearchGame(props: searchGameProps) {
                 name[0] && platformNames.push(name[0]?.name);
             });                    
 
-            return {...element, 
-                first_release_date: new Date(element.first_release_date * 1000).getFullYear() || undefined, 
+            return {
+                gameID: element.id.toString(),
+                gameName: element.name, 
+                yearReleased: new Date(element.first_release_date * 1000).getFullYear() || undefined, 
+                console: (platformNames.length == 1) ? platformNames[0] : undefined,
                 platforms: platformNames || undefined,
-                developer: developerData.find((developer: IGDB_Developer) => developer.developed.find((id: number) => id == element.id))?.name, 
-                genres: genreData.find((genre: IGDB_Genre) => genre.id == element?.genres?.[0])?.name } 
-            } 
-        );
-
-        //Separate games with multiple platforms into separate records
-        let gamesWithMultiplePlatforms = results.filter((game: IGDB_Game) => {
-            return game.platforms.length > 1;
+                developer: developerData.find((developer: IGDB_Developer) => developer.developed.find((id: number) => id == element.id))?.name || undefined, 
+                genre: genreData.find((genre: IGDB_Genre) => genre.id == element?.genres?.[0])?.name || undefined,
+                summary: element.summary || undefined
+            }
         });
 
-        gamesWithMultiplePlatforms.forEach((game: IGDB_Game) => {
-            let index = results.findIndex((object: IGDB_Game) => object.id == game.id );
-            
-            results = results.filter((oldGame: IGDB_Game) => { return game.id != oldGame.id });
+        //Separate games with multiple platforms into separate records
+        let gamesWithMultiplePlatforms = results.filter((game: GameRecord) => {
+            return game.platforms && game.platforms.length > 1;
+        });
 
-            game.platforms.forEach((platform: any) => {
-                results.splice(index, 0, {...game, id: `${game.id}-${platform}`, platforms: platform });
+        gamesWithMultiplePlatforms.forEach((game: GameRecord) => {
+            let index = results.findIndex((object: GameRecord) => object.gameID == game.gameID );
+            
+            results = results.filter((oldGame: GameRecord) => { return game.gameID != oldGame.gameID });
+
+            game.platforms && game.platforms.forEach((platform: any) => {
+                results.splice(index, 0, {...game, gameID: `${game.gameID}-${platform}`, console: platform });
                 index++;
             });
         });
@@ -202,13 +221,13 @@ function SearchGame(props: searchGameProps) {
     [   
         {
         title: "Game Name",
-        dataIndex: "name",
-        key: "name",
+        dataIndex: "gameName",
+        key: "gameName",
         },
         {
         title: "Console",
-        dataIndex: "platforms",
-        key: "platforms"
+        dataIndex: "console",
+        key: "console"
         },
         {
         title: "Developer",
@@ -217,13 +236,13 @@ function SearchGame(props: searchGameProps) {
         },
         {
         title: "Genre",
-        dataIndex: "genres",
-        key: "genres"
+        dataIndex: "genre",
+        key: "genre"
         },
         {
         title: "Year Released",
-        dataIndex: "first_release_date",
-        key: "first_release_date"
+        dataIndex: "yearReleased",
+        key: "yearReleased"
         },
         {
         title: "Summary",
@@ -240,25 +259,24 @@ function SearchGame(props: searchGameProps) {
         },
         {
           title: "Action",
-          dataIndex: "id",
-          key: "id",
-          render: (gameID: string, row: IGDB_Game) => 
+          dataIndex: "gameID",
+          key: "gameID",
+          render: (gameID: string, row: GameRecord) => 
           <>
-            <Typography.Link onClick={ () => { handleAddGameToCollection(gameID, row); } }>
+            <Typography.Link onClick={ () => { handleAddGameToCollection(row); } }>
               Add Game
             </Typography.Link>
           </>
         },
-        
     ]
     
-    const handleAddGameToCollection = (gameID: string, row: IGDB_Game) => {
+    const handleAddGameToCollection = (row: GameRecord) => {
         Modal.confirm({
             title: "Are you sure you want to add this game to your collection?",
             okText: "Yes",
             okType: "danger",
             onOk: async () => {
-                let newGame = new Game(gameID, undefined, row.name, row.first_release_date, row.genres.toString(), row.platforms.toString(), row.developer);
+                let newGame = new Game(row.gameID, undefined, row.gameName, row.yearReleased, row.genre, row.console, row.developer);
                 props.handleCreateGame(newGame);              
             }
         });   
@@ -319,11 +337,9 @@ function SearchGame(props: searchGameProps) {
             {
                 showTable &&
                     <Table locale={{emptyText:<Empty description={!tableLoading && "No games found." } />}} 
-                        dataSource={[...games]} columns={columns} 
-                        loading={tableLoading} pagination={{ pageSize: 5 }} />
+                        rowKey={(record: GameRecord) => record.gameID } dataSource={[...games]} 
+                        columns={columns} loading={tableLoading} pagination={{ pageSize: 5 }} />
             }
-            
-
         </>
     )
 }

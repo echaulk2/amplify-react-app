@@ -320,7 +320,7 @@ function SearchGame(props: searchGameProps) {
             okText: "Yes",
             okType: "danger",
             onOk: async () => {
-                let newGame = new Game(row.gameID, undefined, row.gameName, row.yearReleased, row.genre, row.console, row.developer);
+                let newGame = new Game(row.gameID, undefined, row.gameName, row.yearReleased, row.genre, row.console, row.developer, );
                 props.handleCreateGame(newGame);              
             }
         });   

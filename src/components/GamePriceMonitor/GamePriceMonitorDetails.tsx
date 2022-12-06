@@ -216,6 +216,7 @@ function GamePriceMonitorDetails(props: GamePriceMonitorComponentProps) {
         dataIndex: "desiredPrice",
         key: "desiredPrice",
         editable: true,
+        render: (desiredPrice: number) => `$${desiredPrice}`
     },
     {
         title: "Condition",
@@ -238,20 +239,20 @@ function GamePriceMonitorDetails(props: GamePriceMonitorComponentProps) {
     {
         title: "Lowest Price Listing URL",
         dataIndex: "gamePriceData",
-        key: "listedItemTitle",
+        key: "listedItemURL",
         render: (gamePriceData: GamePriceData) => gamePriceData.listedItemURL && <a href={gamePriceData?.listedItemURL} target="_blank">Buy Here!</a>
     },
     {
         title: "Lowest Price Listing Console",
         dataIndex: "gamePriceData",
         key: "listedItemConsole",
-        render: (gamePriceData: GamePriceData) => gamePriceData?.listedItemTitle
+        render: (gamePriceData: GamePriceData) => gamePriceData?.listedItemConsole
     },
     {
         title: "Lowest Price Listing Title",
         dataIndex: "gamePriceData",
         key: "listedItemTitle",
-        render: (gamePriceData: GamePriceData) => gamePriceData?.listedItemConsole
+        render: (gamePriceData: GamePriceData) => gamePriceData?.listedItemTitle
     },
     {
         title: "Last Checked",
@@ -309,19 +310,16 @@ function GamePriceMonitorDetails(props: GamePriceMonitorComponentProps) {
 
   return (
     <>
-      { priceMonitors && priceMonitors.length > 0 ?
-        <Form form={form} component={false}>
-          <Table dataSource={priceMonitors} columns={mergedColumns} loading={tableLoading} rowClassName="editable-row"
-            pagination={{ pageSize: 5 }} rowKey={(record: GamePriceMonitor) => record.priceMonitorID }                  
-            components={{
-              body: {
-                cell: EditableCell,
-              },
-            }} 
-          />
-        </Form> : 
-        <Empty description="No price monitors found." />
-      }
+      <Form form={form} component={false}>
+        <Table dataSource={priceMonitors} columns={mergedColumns} loading={tableLoading} rowClassName="editable-row"
+          pagination={{ pageSize: 5 }} rowKey={(record: GamePriceMonitor) => record.priceMonitorID }                  
+          components={{
+            body: {
+              cell: EditableCell,
+            },
+          }} locale={{emptyText:<Empty description={!tableLoading && "No price monitors found." } />}} 
+        />
+      </Form>
       <CreatePriceMonitor priceMonitor={creatingPriceMonitor} isCreating={isCreating} setCreatingPriceMonitor={setCreatingPriceMonitor} initializeCreatePriceMonitor={initializeCreatePriceMonitor} 
           handleCreatePriceMonitor={creating} resetCreatePriceMonitor={resetCreatePriceMonitor} />
     </>

@@ -339,14 +339,13 @@ export function CollectionView() {
                 }} rowClassName="editable-row"
               /> 
             </Form>
-            <Heading level={4} style={{ paddingBottom: 20 }}>Search for a game to add to your collection</Heading>
-            <SearchGame creatingGame={creatingGame} handleCreateGame={ handleCreateGame } 
-              setCreatingGame={setCreatingGame} resetCreateGame={resetCreateGame} initializeCreateGame={initializeCreateGame} 
-              isCreating={isCreating}
-            />
           </Card>
         </Col>
       </Row>
+      <SearchGame creatingGame={creatingGame} handleCreateGame={ handleCreateGame } 
+        setCreatingGame={setCreatingGame} resetCreateGame={resetCreateGame} initializeCreateGame={initializeCreateGame} 
+        isCreating={isCreating}
+      />       
     </>
   )
 }

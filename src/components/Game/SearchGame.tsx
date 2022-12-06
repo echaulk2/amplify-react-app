@@ -1,9 +1,9 @@
-import { Button, Empty, Form, Input, message, Modal, Space, Table, Tooltip, Typography } from 'antd';
+import { Button, Card, Col, Empty, Form, Image, Input, message, Modal, Row, Space, Table, Tooltip, Typography } from 'antd';
 import React from 'react';
 import { useState } from 'react';
 import axios from 'axios';
 import { Game } from '../../models/Game';
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { Heading, useAuthenticator } from '@aws-amplify/ui-react';
 
 interface IGDB_Game {
     name: string;
@@ -14,6 +14,7 @@ interface IGDB_Game {
     summary: string;
     storyline: string;  
     developer: string;  
+    cover: number;
 }
 
 interface GameRecord {
@@ -24,7 +25,8 @@ interface GameRecord {
     genre?: string;
     developer?: string;
     summary?: string;
-    yearReleased?: number;    
+    yearReleased?: number;
+    cover?: string;    
 }
 
 interface IGDB_Platform {
@@ -41,6 +43,11 @@ interface IGDB_Developer {
 interface IGDB_Genre {
     id: number;
     name: string;
+}
+
+interface IGDB_Cover {
+    id: number;
+    url: string;
 }
 
 interface searchGameProps {
@@ -82,17 +89,20 @@ function SearchGame(props: searchGameProps) {
                 'Accept': 'application/json',
                 'Authorization': userToken
             },
-            data: `fields name, summary, id, platforms, first_release_date, genres; 
+            data: `fields name, summary, id, platforms, first_release_date, genres, cover; 
                     search "${gameName}"; 
                     limit 25; 
                     where platforms = (${platformData.map((platform: IGDB_Platform) => { return platform.id; })});`
           })
             .then(async (response: any) => {
+                console.log(response.data);
                 if (response.data.length) {
                     let developerData = await getDevelopers(response.data);
                     let genreData = await getGenres(response.data);
-                    let results = formatData(response.data, platformData, developerData, genreData);
+                    let imageData = await getImage(response.data);
+                    let results = formatData(response.data, platformData, developerData, genreData, imageData);
                     setGames(results);
+                    console.log(results);
                 } else {
                     setGames([]);
                 }                    
@@ -171,12 +181,38 @@ function SearchGame(props: searchGameProps) {
         return genreData;
     }
 
+    const getImage = async (data: IGDB_Game[]): Promise<IGDB_Cover[]> => {
+        let coverData: IGDB_Cover[] = [];
+        let coverIDs = data.map((game: IGDB_Game) => { return game.cover }).filter((element) => element !== undefined);
+        let query = `fields *; where id = (${coverIDs});`;
+        console.log(query);
+        await axios({
+            url: " https://4fu7yxd9ml.execute-api.us-east-1.amazonaws.com/production/v4/covers",
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': userToken
+            },
+            data: query
+          })
+            .then((response: any) => {
+                coverData = response.data;       
+                console.log(response.data);
+            })
+            .catch((err: any) => {
+                message.error("Error fetching genre data.");
+                console.error(err);
+        });
+        return coverData;
+    }
+
     // Formats IGDB Relational Data from API calls to game format
         // -  Map platform IDs to platform names, and then separate games with multiple platforms into separate records
         // -  Convert UNIX time to just the year
         // -  Map developer IDs to developer names
         // -  Map the first genre associated with the game to the genre name            
-    const formatData = (data: IGDB_Game[], platformData: IGDB_Game[], developerData: IGDB_Developer[], genreData: IGDB_Genre[]): GameRecord[] => {
+    const formatData = (data: IGDB_Game[], platformData: IGDB_Game[], developerData: IGDB_Developer[], genreData: IGDB_Genre[],
+        imageData: IGDB_Cover[]): GameRecord[] => {
         let results = data.map((element:IGDB_Game): GameRecord => {
             let platformNames: string[] = [];
             element.platforms.forEach((platformID: number) => {
@@ -184,8 +220,8 @@ function SearchGame(props: searchGameProps) {
                     return item.id == platformID;
                 });
                 name[0] && platformNames.push(name[0]?.name);
-            });                    
-
+            });                        
+            console.log(imageData.find((image: IGDB_Cover) => image.id == element.cover));
             return {
                 gameID: element.id.toString(),
                 gameName: element.name, 
@@ -194,8 +230,9 @@ function SearchGame(props: searchGameProps) {
                 platforms: platformNames || undefined,
                 developer: developerData.find((developer: IGDB_Developer) => developer.developed.find((id: number) => id == element.id))?.name || undefined, 
                 genre: genreData.find((genre: IGDB_Genre) => genre.id == element?.genres?.[0])?.name || undefined,
-                summary: element.summary || undefined
-            }
+                summary: element.summary || undefined,
+                cover: imageData.find((image: IGDB_Cover) => image.id == element.cover)?.url || undefined
+            } as GameRecord
         });
 
         //Separate games with multiple platforms into separate records
@@ -219,6 +256,13 @@ function SearchGame(props: searchGameProps) {
 
     const columns = 
     [   
+        {
+        title: "Cover",
+        dataIndex: "cover",
+        key: "cover",
+        align: "center" as const,
+        render: (cover: string, row: GameRecord) => cover && <Image src={cover} alt={row.gameName}></Image>
+        },
         {
         title: "Game Name",
         dataIndex: "gameName",
@@ -289,56 +333,70 @@ function SearchGame(props: searchGameProps) {
     }
 
     return (
-        <>
-            <Form
-                labelCol={{ span: 3 }}
-                wrapperCol={{ span: 10 }}
-                form={form}
-                name="Game Search"
-                onFinish={onFinish}
-                scrollToFirstError
-                labelAlign='left'
-                >
-                <Form.Item
-                    name="name"
-                    label="Game Name"
-                    rules={[
-                    {
-                        required: true,
-                        message: 'Please input a game name',
-                    },
-                    ]}
-                >
-                    <Input value={gameName} onChange={e => setGameName(e.target.value)} />
-                </Form.Item>
-                <Form.Item
-                    name="platform"
-                    label="Platform"
-                    rules={[
-                    {
-                        required: true,
-                        message: 'Please input a platform',
-                    },
-                    ]}
-                >
-                    <Input value={platform} onChange={e => setPlatform(e.target.value)} />
-                </Form.Item>
-                <Form.Item>
-                    <Space wrap>
-                        <Button type="primary" htmlType="submit">
-                        Search
-                        </Button>
-                        <Button type="primary" htmlType="reset" onClick={ () => resetForm() }>
-                        Clear
-                        </Button>
-                    </Space>
-                </Form.Item>
-            </Form>
+        <> 
+            <Row gutter={[16, 16]}>
+                <Col span={12}>
+                    <Card style={{ height: "100%" }}>            
+                        <Heading level={4} style={{ paddingBottom: 20 }}>Search for a game to add to your collection</Heading>
+                        <Form
+                            labelCol={{ span: 3 }}
+                            wrapperCol={{ span: 10 }}
+                            form={form}
+                            name="Game Search"
+                            onFinish={onFinish}
+                            scrollToFirstError
+                            labelAlign='left'
+                            >
+                            <Form.Item
+                                name="name"
+                                label="Game Name"
+                                rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input a game name',
+                                },
+                                ]}
+                            >
+                                <Input value={gameName} onChange={e => setGameName(e.target.value)} />
+                            </Form.Item>
+                            <Form.Item
+                                name="platform"
+                                label="Platform"
+                                rules={[
+                                {
+                                    required: true,
+                                    message: 'Please input a platform',
+                                },
+                                ]}
+                            >
+                                <Input value={platform} onChange={e => setPlatform(e.target.value)} />
+                            </Form.Item>
+                            <Form.Item>
+                                <Space wrap>
+                                    <Button type="primary" htmlType="submit">
+                                    Search
+                                    </Button>
+                                    <Button type="primary" htmlType="reset" onClick={ () => resetForm() }>
+                                    Clear
+                                    </Button>
+                                </Space>
+                            </Form.Item>
+                        </Form>
+                    </Card>
+                </Col>    
+            </Row>
             {
-                showTable &&
-                    <Table locale={{emptyText:<Empty description={!tableLoading && "No games found." } />}} 
-                        rowKey={(record: GameRecord) => record.gameID } dataSource={[...games]} 
-                        columns={columns} loading={tableLoading} pagination={{ pageSize: 5 }} />
+            showTable &&
+            <Row gutter={[16, 16]}>
+                <Col>
+                    <Card>
+                        <Heading level={5} style={{ paddingBottom: 20 }} display={!tableLoading ? "inline-block" : "none"}>Your search found {games.length} results.</Heading>
+                        <Table locale={{emptyText:<Empty description={!tableLoading && "No games found." } />}} 
+                            rowKey={(record: GameRecord) => record.gameID } dataSource={[...games]} 
+                            columns={columns} loading={tableLoading} pagination={{ pageSize: 5 }} />
+                    </Card>
+                </Col>
+            </Row>
             }
         </>
     )

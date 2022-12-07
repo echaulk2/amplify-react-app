@@ -5,9 +5,8 @@ import { message, Card, Col, Row, Table, Modal, InputNumber, Input, Form, Typogr
 import * as Interfaces from "../../shared/Interfaces";
 import { Game } from '../../models/Game';
 import { DefaultRecordType } from 'rc-table/lib/interface';
-import CreateGame from '../Game/CreateGame';
-import { NavLink } from 'react-router-dom';
-import CollectionList from './CollectionList';
+import { NavLink, useParams } from 'react-router-dom';
+import SearchGame from '../Game/SearchGame';
 
 interface CollectionTableProps {
   collectionID?: string;
@@ -26,6 +25,7 @@ export function CollectionTable(props: CollectionTableProps) {
   const [editingKey, setEditingKey] = useState('');
   const [editingGame, setEditingGame] = useState<Game>({} as Game);
 
+  let params = useParams();
   let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
   
   const handleGetCollection = async() => {
@@ -33,7 +33,7 @@ export function CollectionTable(props: CollectionTableProps) {
     let apiName = 'GameAPI';
     let path = "";
     let init = {};
-    if (props.collectionID) {
+    if (params.collectionID) {
       path = '/collection/wishlist/'; 
       init = {
           headers: {
@@ -41,7 +41,7 @@ export function CollectionTable(props: CollectionTableProps) {
           },
           response: true,
           queryStringParameters: {
-            collectionID: props.collectionID
+            collectionID: params.collectionID
           }
       }
     } else {
@@ -58,7 +58,6 @@ export function CollectionTable(props: CollectionTableProps) {
       .get(apiName, path, init)
       .then(response => {
         if (response.data) {
-          console.log(response.data);
           setCollection(response.data);
         }
       })
@@ -71,7 +70,6 @@ export function CollectionTable(props: CollectionTableProps) {
   const initializeCreateGame = () => { 
     setIsCreating(true);
     setCreatingGame(new Game(""));
-    creatingGame.collectionID = (props.collectionID) ? props.collectionID : undefined
   }
   
   const resetCreateGame = () => {
@@ -79,35 +77,36 @@ export function CollectionTable(props: CollectionTableProps) {
     setCreatingGame({} as Game);
   }
 
-  const handleCreateGame = async (newGame: Game) => {     
+  const handleCreateGame = async (game: Game) => {     
     setTableLoading(true);
-    console.log(newGame);
     const apiName = 'GameAPI';
-    const path = '/createGame'; 
+    const path = (game.collectionID === `Col-${game.userID}-Default` || !game.collectionID) ? '/createGame' : '/collection/wishlist/addGame';
     const init = {
         headers: {
           'Authorization': userToken
         },
         body: {
-            gameName: newGame.gameName,
-            developer: newGame.developer,
-            yearReleased: Number(newGame.yearReleased),
-            genre: newGame.genre,
-            console: newGame.console,
-            collectionID: newGame.collectionID
+            gameName: game.gameName,
+            developer: game.developer,
+            yearReleased: (game.yearReleased) ? Number(game.yearReleased) : undefined,
+            genre: game.genre,
+            console: game.console,
+            cover: game.cover,
+            collectionID: game.collectionID
         },
         response: true
     };
+
     await API
       .post(apiName, path, init)
       .then((response: Interfaces.IHttpResponse) => {
         if (response.status === 200 && response.data) {
-            setCollection([...collection, response.data as Game]);
-            message.success(`${creatingGame.gameName} has been added to your collection.`);
+            (game.collectionID === `Col-${game.userID}-Default` || !game.collectionID) ? setCollection([...collection, response.data as Game]) : setCollection(response.data as Game[]);
+            message.success(`${game.gameName} has been added to your collection.`);
         }
       })
       .catch(error => {
-        message.error(`Unable to add ${creatingGame.gameName} to your collection.`);
+        message.error(`Unable to add ${game.gameName} to your collection.`);
     }); 
     setTableLoading(false);
   }
@@ -119,7 +118,7 @@ export function CollectionTable(props: CollectionTableProps) {
       okType: "danger",
       onOk: async () => {
         let apiName = 'GameAPI';
-        let path = (game.collectionID === `Col-${game.userID}-Default`) ? '/deleteGame' : '/collection/wishlist/removeGame'; 
+        let path = (game.collectionID === `Col-${game.userID}-Default` || !game.collectionID) ? '/deleteGame' : '/collection/wishlist/removeGame'; 
         let body = {
           gameName: game.gameName,
           gameID: game.gameID,
@@ -132,7 +131,7 @@ export function CollectionTable(props: CollectionTableProps) {
             body: body,
             response: true
         };
-        
+
         setTableLoading(true);
         await API
           .del(apiName, path, init)
@@ -151,6 +150,7 @@ export function CollectionTable(props: CollectionTableProps) {
       }
     });    
   }    
+  
   const EditableCell: React.FC<Interfaces.EditableGameCellProps> = ({
       editing,
       dataIndex,
@@ -206,7 +206,7 @@ export function CollectionTable(props: CollectionTableProps) {
       const row = (await form.validateFields()) as Game;
       setTableLoading(true);
       let apiName = 'GameAPI';
-      let path = (record.collectionID === `Col-${record.userID}-Default`) ? '/modifyGame' : '/collection/wishlist/modifyGame'; 
+      let path = (record.collectionID === `Col-${record.userID}-Default` || !record.collectionID) ? '/modifyGame' : '/collection/wishlist/modifyGame'; 
       let body = {
         gameName: record.gameName,
         gameID: record.gameID,
@@ -260,15 +260,15 @@ export function CollectionTable(props: CollectionTableProps) {
       sorter: (a: DefaultRecordType, b: DefaultRecordType) => a.gameName.localeCompare(b.gameName)
     },
     {
-      title: "Developer",
-      dataIndex: "developer",
-      key: "developer",      
+      title: "Console",
+      dataIndex: "console",
+      key: "console",      
       editable: true,
     },
     {
-      title: "Year Released",
-      dataIndex: "yearReleased",
-      key: "yearReleased",      
+      title: "Developer",
+      dataIndex: "developer",
+      key: "developer",      
       editable: true,
     },
     {
@@ -278,16 +278,16 @@ export function CollectionTable(props: CollectionTableProps) {
       editable: true,
     },
     {
-      title: "Console",
-      dataIndex: "console",
-      key: "console",      
+      title: "Year Released",
+      dataIndex: "yearReleased",
+      key: "yearReleased",      
       editable: true,
     },
     {
       title: "Status",
       dataIndex: "collectionID",
       key: "collectionID",
-      render: (collectionID: string, row: Game) => (collectionID === `Col-${row.userID}-Default`) ? "Owned" : "Wishlist"
+      render: (collectionID: string, row: Game) => (collectionID === `Col-${row.userID}-Default`) ? "Owned" : <NavLink to={`/collection/${collectionID}`}>Wishlist</NavLink>
     },
     {
       title: "Details",
@@ -338,27 +338,35 @@ export function CollectionTable(props: CollectionTableProps) {
       }),
     };
   });
-  
+
   useEffect(() => {
     handleGetCollection();
   }, []) 
 
   return (
-    <Card style={{ height: "100%" }}>
-      <Heading level={2}>{user.getUsername()}'s games</Heading>
-      <Form form={form} component={false}>
-        <Table dataSource={collection} columns={mergedColumns} size="small" 
-          rowKey={(record: Game) => record.gameID } className="collection-table" 
-          loading={tableLoading} pagination={{ pageSize: 5 }}
-          components={{
-            body: {
-              cell: EditableCell,
-            },
-          }} rowClassName="editable-row"
-        /> 
-      </Form>
-      <CreateGame game={creatingGame} isCreating={isCreating} setCreatingGame={setCreatingGame} initializeCreateGame={initializeCreateGame} 
-        handleCreateGame={handleCreateGame} resetCreateGame={resetCreateGame} />
-    </Card>
+    <>
+    <Row gutter={[16, 16]}>
+      <Col span={12}>
+        <Card style={{ height: "100%" }}>
+          <Heading level={2} style={{ paddingBottom: 20 }}>{user.getUsername()}'s games</Heading>
+          <Form form={form} component={false}>
+            <Table dataSource={collection} columns={mergedColumns} size="small" 
+              rowKey={(record: Game) => record.gameID } className="collection-table" 
+              loading={tableLoading} pagination={{ pageSize: 5 }}
+              components={{
+                body: {
+                  cell: EditableCell,
+                },
+              }} rowClassName="editable-row"
+            /> 
+          </Form>     
+        </Card>
+      </Col>
+    </Row>    
+    <SearchGame creatingGame={creatingGame} handleCreateGame={ handleCreateGame } 
+      setCreatingGame={setCreatingGame} resetCreateGame={resetCreateGame} initializeCreateGame={initializeCreateGame} 
+      isCreating={isCreating}
+    />
+    </>
   )
 }

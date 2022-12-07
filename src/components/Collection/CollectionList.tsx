@@ -1,5 +1,5 @@
 import { useAuthenticator } from '@aws-amplify/ui-react';
-import { Button, Card, message, Table } from 'antd';
+import { Button, Card, Col, message, Row, Table } from 'antd';
 import { API } from 'aws-amplify';
 import React, { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom';
@@ -88,10 +88,12 @@ function CollectionList() {
     }, [])
     
     return (
-        <Card title="Collections">
+        <Col span={12}>
+          <Card title="Collections" style={{ height: "100%" }}>
             <Table dataSource={collections} columns={columns} loading={tableLoading} />
             <Button onClick={handleCreateCollection} type="primary">Create Collection</Button>
-        </Card>
+          </Card>
+        </Col>
     )
 }
 

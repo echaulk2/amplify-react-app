@@ -4,6 +4,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { Game } from '../../models/Game';
 import { Heading, useAuthenticator } from '@aws-amplify/ui-react';
+import { useParams } from 'react-router-dom';
 
 interface IGDB_Game {
     name: string;
@@ -69,6 +70,7 @@ function SearchGame(props: searchGameProps) {
     const [showTable, setShowTable] = useState(false);
     
     let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
+    let params = useParams();
     
     const onFinish = async () => {
         setShowTable(true);
@@ -95,14 +97,12 @@ function SearchGame(props: searchGameProps) {
                     where platforms = (${platformData.map((platform: IGDB_Platform) => { return platform.id; })});`
           })
             .then(async (response: any) => {
-                console.log(response.data);
                 if (response.data.length) {
                     let developerData = await getDevelopers(response.data);
                     let genreData = await getGenres(response.data);
                     let imageData = await getImage(response.data);
                     let results = formatData(response.data, platformData, developerData, genreData, imageData);
                     setGames(results);
-                    console.log(results);
                 } else {
                     setGames([]);
                 }                    
@@ -185,7 +185,7 @@ function SearchGame(props: searchGameProps) {
         let coverData: IGDB_Cover[] = [];
         let coverIDs = data.map((game: IGDB_Game) => { return game.cover }).filter((element) => element !== undefined);
         let query = `fields *; where id = (${coverIDs});`;
-        console.log(query);
+
         await axios({
             url: " https://4fu7yxd9ml.execute-api.us-east-1.amazonaws.com/production/v4/covers",
             method: 'POST',
@@ -196,8 +196,7 @@ function SearchGame(props: searchGameProps) {
             data: query
           })
             .then((response: any) => {
-                coverData = response.data;       
-                console.log(response.data);
+                coverData = response.data;    
             })
             .catch((err: any) => {
                 message.error("Error fetching genre data.");
@@ -221,7 +220,7 @@ function SearchGame(props: searchGameProps) {
                 });
                 name[0] && platformNames.push(name[0]?.name);
             });                        
-            console.log(imageData.find((image: IGDB_Cover) => image.id == element.cover));
+            
             return {
                 gameID: element.id.toString(),
                 gameName: element.name, 
@@ -320,7 +319,7 @@ function SearchGame(props: searchGameProps) {
             okText: "Yes",
             okType: "danger",
             onOk: async () => {
-                let newGame = new Game(row.gameID, undefined, row.gameName, row.yearReleased, row.genre, row.console, row.developer, );
+                let newGame = new Game(row.gameID, undefined, row.gameName, row.yearReleased, row.genre, row.console, row.developer, row.cover, params.collectionID);
                 props.handleCreateGame(newGame);              
             }
         });   

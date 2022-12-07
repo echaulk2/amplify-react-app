@@ -17,8 +17,8 @@ export function Navbar() {
   return (
     <Menu mode="horizontal" theme="dark">
         <Menu.Item onClick={() => navigate('/')} key={uuidv4()}>Home</Menu.Item>
-        <Menu.Item onClick={() => navigate('/collection')} key={uuidv4()}>
-          Collection
+        <Menu.Item onClick={() => navigate('/profile')} key={uuidv4()}>
+          Profile
         </Menu.Item>
         {route !== 'authenticated' ? (
           <Menu.Item onClick={() => navigate('/login')} key={uuidv4()} style={{ marginLeft: 'auto' }}>Login</Menu.Item>

@@ -1,5 +1,5 @@
 import { Heading, useAuthenticator } from '@aws-amplify/ui-react';
-import { Card, Col, Empty, List, message, Row, Space, Table } from 'antd';
+import { Card, Col, Empty, Image, List, message, Row, Space, Table } from 'antd';
 import { API } from 'aws-amplify';
 import { useEffect, useState } from 'react'
 import { useParams } from "react-router-dom";
@@ -52,7 +52,10 @@ function GameView() {
   return (
     <>
         <Row gutter={[1, 16]}>
-          <Heading level={1}>{game.gameName}</Heading>
+          <Card style={{ marginBottom: 20 }}>
+            { game.cover && <Image src={game.cover} alt={game.gameName} />}
+            <Heading level={1} style={{ display: "inline-block", verticalAlign: "middle", paddingLeft: 20 }}>{game.gameName}</Heading>
+          </Card>          
         </Row>
         <Row gutter={[16, 16]}>
             <Col span={4}>

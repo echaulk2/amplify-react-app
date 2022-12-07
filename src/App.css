@@ -44,3 +44,7 @@ h1.amplify-heading--1 {
   position: absolute !important;
   bottom: 5%;
 }
+
+.ant-row {
+  margin-bottom: 20px;
+}

@@ -7,6 +7,7 @@ import { Game } from '../../models/Game';
 import { DefaultRecordType } from 'rc-table/lib/interface';
 import { NavLink, useParams } from 'react-router-dom';
 import SearchGame from '../Game/SearchGame';
+import { GameAPI } from '../../api/GameAPI/GameAPI';
 
 interface CollectionTableProps {
   collectionID?: string;
@@ -28,42 +29,16 @@ export function CollectionTable(props: CollectionTableProps) {
   let params = useParams();
   let userToken = user.getSignInUserSession()?.getIdToken().getJwtToken();
   
-  const handleGetCollection = async() => {
+  const getCollection = async () => {
     setTableLoading(true);
-    let apiName = 'GameAPI';
-    let path = "";
-    let init = {};
-    if (params.collectionID) {
-      path = '/collection/wishlist/'; 
-      init = {
-          headers: {
-            'Authorization': userToken
-          },
-          response: true,
-          queryStringParameters: {
-            collectionID: params.collectionID
-          }
-      }
-    } else {
-      path = '/listGames'; 
-      init = {
-        headers: {
-          'Authorization': userToken
-        },
-      response: true
-      }
-    }    
-
-    await API
-      .get(apiName, path, init)
-      .then(response => {
-        if (response.data) {
-          setCollection(response.data);
-        }
-      })
-      .catch(error => {
-        console.log(error.response);
-    });
+    let myAPI = new GameAPI(user, undefined, params.collectionID);
+    await myAPI.handleGetCollection()
+    .then((response) => {
+      setCollection(response);
+    })
+    .catch((error) => {
+      console.log(error);
+    })
     setTableLoading(false);
   }
 
@@ -340,7 +315,7 @@ export function CollectionTable(props: CollectionTableProps) {
   });
 
   useEffect(() => {
-    handleGetCollection();
+    getCollection();
   }, []) 
 
   return (

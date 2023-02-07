@@ -1,4 +1,4 @@
-import { CollectionView } from '../Collection/CollectionView';
+import { ProfileView } from '../Profile/ProfileView';
 import { RequireAuth } from './RequireAuth';
 import { Login } from './Login';
 import { Home } from './Home';
@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import '../../App.css';
 import 'antd/dist/antd.css'; 
 import GameView from '../Game/GameView';
+import CollectionView from '../Collection/CollectionView';
 
 export function RoutesTree() {
   return (
@@ -15,10 +16,10 @@ export function RoutesTree() {
         <Route path="/" element={<BasicLayout />}>
           <Route index element={<Home />} />
           <Route
-            path="/collection"
+            path="/profile"
             element={
               <RequireAuth>
-                <CollectionView />
+                <ProfileView />
               </RequireAuth>
             }
           />
@@ -27,6 +28,13 @@ export function RoutesTree() {
             element={
             <RequireAuth>
               <GameView />
+            </RequireAuth>} 
+          />
+          <Route 
+            path="/collection/:collectionID" 
+            element={
+            <RequireAuth>
+              <CollectionView />
             </RequireAuth>} 
           />
           <Route path="/login" element={<Login />} />

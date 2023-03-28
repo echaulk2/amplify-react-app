@@ -4,7 +4,7 @@ export function Home() {
   const { user } = useAuthenticator((context) => [context.user]);
   return (
     <Heading level={3}>
-      <>Hello {user ? user.username : ' user'}, welcome to the Game Collection App!  { !user && "Please log in or create an account." }</>
+      <>Hello {user ? user.username : ' user'}, welcome to The Game Bazaar!  { !user && "Please log in or create an account." }</>
     </Heading>
   );
 }

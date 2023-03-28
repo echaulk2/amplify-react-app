@@ -6,7 +6,6 @@ export function ProfileView() {
   return (
     <>
       <CollectionTable />
-      <CollectionList />
     </>
   )
 }

@@ -48,3 +48,19 @@ h1.amplify-heading--1 {
 .ant-row {
   margin-bottom: 20px;
 }
+
+.basic-layout {
+  background: linear-gradient(rgba(255,255,255,.4), rgba(255,255,255,.4)), url("https://media.wired.com/photos/5e4c3febc37d1a0008ff6887/191:100/w_2400,h_1256,c_limit/security-feature_art-youtube%20gaming%20cheats-103629800-1058418382.jpg") no-repeat;
+}
+
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;  
+}
+
+.login-wrapper h1 {
+  text-align: center;
+  font-size: 2em;
+}

@@ -15,15 +15,17 @@ export function Navbar() {
   }
 
   return (
-    <Menu mode="horizontal" theme="dark">
+    <Menu mode="horizontal">
         <Menu.Item onClick={() => navigate('/')} key={uuidv4()}>Home</Menu.Item>
-        <Menu.Item onClick={() => navigate('/profile')} key={uuidv4()}>
+        <Menu.Item onClick={() => navigate('/')} key={uuidv4()}>My Games</Menu.Item>
+        <Menu.Item onClick={() => navigate('/')} key={uuidv4()}>My Wishlist</Menu.Item>
+        <Menu.Item onClick={() => navigate('/profile')} key={uuidv4()} style={{ marginLeft: 'auto' }}>
           Profile
         </Menu.Item>
         {route !== 'authenticated' ? (
-          <Menu.Item onClick={() => navigate('/login')} key={uuidv4()} style={{ marginLeft: 'auto' }}>Login</Menu.Item>
+          <Menu.Item onClick={() => navigate('/login')} key={uuidv4()}>Login</Menu.Item>
         ) : (
-          <Menu.Item onClick={() => logOut()} key={uuidv4()} style={{ marginLeft: 'auto' }}>Logout</Menu.Item>
+          <Menu.Item onClick={() => logOut()} key={uuidv4()}>Logout</Menu.Item>
         )}
     </Menu>
   );

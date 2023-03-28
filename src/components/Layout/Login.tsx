@@ -9,6 +9,7 @@ export function Login() {
   const location: any = useLocation();
   const navigate = useNavigate();
   let from = location.state?.from?.pathname || '/';
+  
   useEffect(() => {
     if (route === 'authenticated') {
       navigate(from, { replace: true });
@@ -17,8 +18,11 @@ export function Login() {
   }, [route, navigate, from]);
   
   return (
-    <View className="auth-wrapper">
-      <Authenticator></Authenticator>
-    </View>
+        <div className="login-wrapper">
+          <View className="auth-wrapper">
+            <h1>The Game Bazaar</h1>
+            <Authenticator></Authenticator>
+          </View>
+        </div>
   );
 }

@@ -322,8 +322,7 @@ export function CollectionTable(props: CollectionTableProps) {
     <>
     <Row gutter={[16, 16]}>
       <Col span={12}>
-        <Card style={{ height: "100%" }}>
-          <Heading level={2} style={{ paddingBottom: 20 }}>{user.getUsername()}'s games</Heading>
+        <Card style={{ height: "100%" }} title={`${user.getUsername()}'s Games`}>
           <Form form={form} component={false}>
             <Table dataSource={collection} columns={mergedColumns} size="small" 
               rowKey={(record: Game) => record.gameID } className="collection-table" 
@@ -333,15 +332,21 @@ export function CollectionTable(props: CollectionTableProps) {
                   cell: EditableCell,
                 },
               }} rowClassName="editable-row"
-            /> 
-          </Form>     
+              locale={{emptyText:    
+                <SearchGame creatingGame={creatingGame} handleCreateGame={handleCreateGame} 
+                  setCreatingGame={setCreatingGame} resetCreateGame={resetCreateGame} initializeCreateGame={initializeCreateGame} 
+                  isCreating={isCreating} /> }} 
+            />
+          </Form>         
+          {
+            ( collection && collection.length > 0 ) &&
+            <SearchGame creatingGame={creatingGame} handleCreateGame={handleCreateGame} 
+            setCreatingGame={setCreatingGame} resetCreateGame={resetCreateGame} initializeCreateGame={initializeCreateGame} 
+            isCreating={isCreating} />   
+          }     
         </Card>
       </Col>
-    </Row>    
-    <SearchGame creatingGame={creatingGame} handleCreateGame={ handleCreateGame } 
-      setCreatingGame={setCreatingGame} resetCreateGame={resetCreateGame} initializeCreateGame={initializeCreateGame} 
-      isCreating={isCreating}
-    />
+    </Row>   
     </>
   )
 }

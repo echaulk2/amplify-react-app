@@ -16,7 +16,9 @@ function SearchGame(props: Interfaces.searchGameProps) {
     const [gameName, setGameName] = useState('');
     const [tableLoading, setTableLoading] = useState(false);
     const [showTable, setShowTable] = useState(false);
-    
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSearchResultsModalOpen, setIsSearchResultsModalOpen] = useState(false);    
+
     let params = useParams();
 
     const onFinish = async () => {
@@ -41,7 +43,10 @@ function SearchGame(props: Interfaces.searchGameProps) {
             okType: "danger",
             onOk: async () => {
                 let newGame = new Game(row.gameID, undefined, row.gameName, row.yearReleased, row.genre, row.console, row.developer, row.cover, params.collectionID);
-                props.handleCreateGame(newGame);              
+                props.handleCreateGame(newGame);                 
+                setIsModalOpen(false);
+                setIsSearchResultsModalOpen(false);
+                form.resetFields();           
             }
         });   
     }
@@ -51,6 +56,30 @@ function SearchGame(props: Interfaces.searchGameProps) {
         setTableLoading(false);
         setShowTable(false);
     }
+    const showModal = () => {
+        setIsModalOpen(true);
+    };
+    
+    const handleOk = () => {
+        setIsModalOpen(false);
+    };
+    
+    const handleCancel = () => {
+        setIsModalOpen(false);
+    };
+
+    const showSearchResultsModal = () => {
+        setIsSearchResultsModalOpen(true);
+    };
+    
+    const handleSearchResultsModalOk = () => {
+        setIsSearchResultsModalOpen(false);
+    };
+    
+    const handleSearchResultsModalCancel = () => {
+        setIsSearchResultsModalOpen(false);
+    };
+
 
     const columns = 
     [   
@@ -114,70 +143,60 @@ function SearchGame(props: Interfaces.searchGameProps) {
        
     return (
         <> 
-            <Row gutter={[16, 16]}>
-                <Col span={12}>
-                    <Card style={{ height: "100%" }}>            
-                        <Heading level={4} style={{ paddingBottom: 20 }}>Search for a game to add to your collection</Heading>
-                        <Form
-                            labelCol={{ span: 3 }}
-                            wrapperCol={{ span: 10 }}
-                            form={form}
-                            name="Game Search"
-                            onFinish={onFinish}
-                            scrollToFirstError
-                            labelAlign='left'
-                            >
-                            <Form.Item
-                                name="name"
-                                label="Game Name"
-                                rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input a game name',
-                                },
-                                ]}
-                            >
-                                <Input value={gameName} onChange={e => setGameName(e.target.value)} />
-                            </Form.Item>
-                            <Form.Item
-                                name="platform"
-                                label="Platform"
-                                rules={[
-                                {
-                                    required: true,
-                                    message: 'Please input a platform',
-                                },
-                                ]}
-                            >
-                                <Input value={platform} onChange={e => setPlatform(e.target.value)} />
-                            </Form.Item>
-                            <Form.Item>
-                                <Space wrap>
-                                    <Button type="primary" htmlType="submit">
-                                    Search
-                                    </Button>
-                                    <Button type="primary" htmlType="reset" onClick={ () => resetForm() }>
-                                    Clear
-                                    </Button>
-                                </Space>
-                            </Form.Item>
-                        </Form>
-                    </Card>
-                </Col>    
-            </Row>
-            {
-            showTable &&
-            <Row gutter={[16, 16]}>
-                <Col>
-                    <Card>
-                        <Heading level={5} style={{ paddingBottom: 20 }} display={!tableLoading ? "inline-block" : "none"}>Your search found {games.length} results.</Heading>
-                        <Table locale={{emptyText:<Empty description={!tableLoading && "No games found." } />}} 
-                            rowKey={(record: Interfaces.GameRecord) => record.gameID } dataSource={[...games]} 
-                            columns={columns} loading={tableLoading} pagination={{ pageSize: 5 }} />
-                    </Card>
-                </Col>
-            </Row>
-            }
+            <Button type="primary" onClick={showModal}>
+                Add a game to your collection
+            </Button>        
+            <Modal title="Search for a game to add to your collection" visible={isModalOpen} onOk={handleOk} onCancel={handleCancel}>       
+                <Form
+                    labelCol={{ span: 6 }}
+                    form={form}
+                    name="Game Search"
+                    onFinish={onFinish}
+                    scrollToFirstError
+                    labelAlign='left'
+                    >
+                    <Form.Item
+                        name="name"
+                        label="Game Name"
+                        rules={[
+                        {
+                            required: true,
+                            message: 'Please input a game name',
+                        },
+                        ]}
+                    >
+                        <Input value={gameName} onChange={e => setGameName(e.target.value)} />
+                    </Form.Item>
+                    <Form.Item
+                        name="platform"
+                        label="Platform"
+                        rules={[
+                        {
+                            required: true,
+                            message: 'Please input a platform',
+                        },
+                        ]}
+                    >
+                        <Input value={platform} onChange={e => setPlatform(e.target.value)} />
+                    </Form.Item>
+                    <Form.Item>
+                        <Space wrap>
+                            <Button type="primary" htmlType="submit" onClick={showSearchResultsModal}>
+                            Search
+                            </Button>
+                            <Button type="primary" htmlType="reset" onClick={ () => resetForm() }>
+                            Clear
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>                
+            </Modal>
+            <Modal title={!tableLoading && `Your search found ${games.length} results.`} visible={isSearchResultsModalOpen} 
+                onOk={handleSearchResultsModalOk} onCancel={handleSearchResultsModalCancel} width={1500}>
+                <Table locale={{emptyText:<Empty description={!tableLoading && "No games found." } />}} 
+                    rowKey={(record: Interfaces.GameRecord) => record.gameID } dataSource={[...games]} 
+                    columns={columns} loading={tableLoading} pagination={{ pageSize: 5 }} />
+            </Modal>                
         </>
     )
 }

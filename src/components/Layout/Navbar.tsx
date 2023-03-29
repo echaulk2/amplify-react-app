@@ -17,7 +17,7 @@ export function Navbar() {
   return (
     <Menu mode="horizontal">
         <Menu.Item onClick={() => navigate('/')} key={uuidv4()}>Home</Menu.Item>
-        <Menu.Item onClick={() => navigate('/')} key={uuidv4()}>My Games</Menu.Item>
+        <Menu.Item onClick={() => navigate('/games')} key={uuidv4()}>My Games</Menu.Item>
         <Menu.Item onClick={() => navigate('/')} key={uuidv4()}>My Wishlist</Menu.Item>
         <Menu.Item onClick={() => navigate('/profile')} key={uuidv4()} style={{ marginLeft: 'auto' }}>
           Profile

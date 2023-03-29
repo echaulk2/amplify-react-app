@@ -18,11 +18,11 @@ export function Login() {
   }, [route, navigate, from]);
   
   return (
-        <div className="login-wrapper">
-          <View className="auth-wrapper">
-            <h1>The Game Bazaar</h1>
-            <Authenticator></Authenticator>
-          </View>
-        </div>
+    <div className="login-wrapper">
+      <View className="auth-wrapper">
+        <h1>The Game Bazaar</h1>
+        <Authenticator></Authenticator>
+      </View>
+    </div>
   );
 }

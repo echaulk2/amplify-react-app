@@ -8,6 +8,7 @@ import '../../App.css';
 import 'antd/dist/antd.css'; 
 import GameView from '../Game/GameView';
 import CollectionView from '../Collection/CollectionView';
+import GamesView from './GamesView';
 
 export function RoutesTree() {
   return (
@@ -15,6 +16,14 @@ export function RoutesTree() {
       <Routes>
         <Route path="/" element={<BasicLayout />}>
           <Route index element={<Home />} />
+          <Route
+            path="/games"
+            element={
+              <RequireAuth>
+                <GamesView />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/profile"
             element={
